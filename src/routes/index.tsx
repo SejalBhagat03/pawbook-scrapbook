@@ -13,7 +13,7 @@ import {
 import { PetQuizModal } from "@/components/pawbook/PetQuizModal";
 import { SpinWheel } from "@/components/pawbook/SpinWheel";
 import { InstagramStories } from "@/components/pawbook/InstagramStories";
-import { playPop, playRustle, playBark, playMeow } from "@/lib/sound";
+import { playPop, playRustle, playBark, playMeow, playPageFlip } from "@/lib/sound";
 
 import { useServerFn } from "@tanstack/react-start";
 import { uploadToBucket } from "@/lib/storage";

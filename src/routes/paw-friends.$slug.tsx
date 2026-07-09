@@ -665,7 +665,7 @@ function AnimalProfile() {
               <div className="relative">
                 {/* Sewn thread timeline line that grows on scroll */}
                 <div
-                  className="absolute left-[1px] top-0 w-0.5 bg-peach transition-all duration-300 z-10"
+                  className="absolute left-px top-0 w-0.5 bg-peach transition-all duration-300 z-10"
                   style={{ height: `${Math.min(scrollProgress * 230, 100)}%` }}
                 />
                 <ol className="relative space-y-4 border-l-2 border-dashed border-peach/50 pl-5">

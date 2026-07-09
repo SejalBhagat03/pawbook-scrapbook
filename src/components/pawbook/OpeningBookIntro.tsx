@@ -58,7 +58,7 @@ export function OpeningBookIntro() {
       </button>
 
       {/* 3D Book Container */}
-      <div className="book-container relative w-full max-w-[340px] sm:max-w-[420px] aspect-[3/4] flex items-center justify-center">
+      <div className="book-container relative w-full max-w-[340px] sm:max-w-[420px] aspect-3/4 flex items-center justify-center">
         {/* Left/Back page (base of the book inside) */}
         <div
           className={`absolute inset-0 rounded-r-3xl bg-[#fdfbf7] p-6 sm:p-8 flex flex-col justify-center border-l border-coffee/20 shadow-2xl transition-opacity duration-300 ${bookOpen ? "opacity-100" : "opacity-0"}`}
@@ -73,7 +73,7 @@ export function OpeningBookIntro() {
               <p className="text-2xl sm:text-3xl font-hand leading-relaxed">
                 🐾 Every street friend has a story, a favorite corner, and a heart.
               </p>
-              <div className="w-12 h-[1px] bg-coffee/20" />
+              <div className="w-12 h-px bg-coffee/20" />
               <p className="font-hand text-lg sm:text-xl text-coffee/70 italic">
                 Welcome to PawBook — a living memory diary of our community paws.
               </p>
@@ -102,9 +102,7 @@ export function OpeningBookIntro() {
 
           <div className="mb-4">
             <div className="h-[2px] w-12 bg-coffee/30 mb-2" />
-            <p className="font-hand text-lg text-coffee/70">
-              Open the diary of street companions
-            </p>
+            <p className="font-hand text-lg text-coffee/70">Open the diary of street companions</p>
           </div>
         </div>
       </div>
