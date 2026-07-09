@@ -7,7 +7,14 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
-  nitro: { preset: "vercel" },
+  nitro: {
+    preset: "vercel",
+    externals: {
+      // Force Nitro to inline these into the server bundle instead of externalizing them.
+      // Without this, Vercel serverless runtime cannot find tslib / supabase at runtime.
+      inline: ["tslib", "@supabase/functions-js", "@supabase/supabase-js"],
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
