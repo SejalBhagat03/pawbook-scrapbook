@@ -78,13 +78,48 @@ function createSupabaseClient() {
   });
 }
 
+class MockSupabaseClient {
+  error: Error;
+  auth: {
+    onAuthStateChange: () => { data: { subscription: { unsubscribe: () => void } } };
+    getSession: () => Promise<{ data: { session: null } }>;
+  };
+
+  constructor(error: Error) {
+    this.error = error;
+    this.auth = {
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => {} } },
+      }),
+      getSession: () => Promise.resolve({ data: { session: null } }),
+    };
+  }
+
+  from() {
+    return {
+      select: () => ({
+        eq: () => ({
+          order: () => Promise.resolve({ data: [], error: this.error }),
+        }),
+      }),
+    };
+  }
+}
+
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
 export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
-  get(_, prop, receiver) {
-    if (!_supabase) _supabase = createSupabaseClient();
-    return Reflect.get(_supabase, prop, receiver);
+  get(target, prop, receiver) {
+    if (!_supabase) {
+      try {
+        _supabase = createSupabaseClient();
+      } catch (err) {
+        console.error("[Supabase Proxy Catch] Fallback to MockSupabaseClient:", err);
+        _supabase = new MockSupabaseClient(
+          err instanceof Error ? err : new Error(String(err)),
+        ) as any;
+      }
+    }
+    return Reflect.get(_supabase!, prop, receiver);
   },
 });
