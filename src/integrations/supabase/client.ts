@@ -117,7 +117,7 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
         console.error("[Supabase Proxy Catch] Fallback to MockSupabaseClient:", err);
         _supabase = new MockSupabaseClient(
           err instanceof Error ? err : new Error(String(err)),
-        ) as any;
+        ) as unknown as ReturnType<typeof createSupabaseClient>;
       }
     }
     return Reflect.get(_supabase!, prop, receiver);
