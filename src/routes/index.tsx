@@ -30,13 +30,18 @@ type FoundFriendRow = Database["public"]["Tables"]["found_friends"]["Row"];
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const { data, error } = await supabase
-      .from("found_friends")
-      .select("*")
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
-    if (error) console.error(error.message);
-    return { approved: data || [] };
+    try {
+      const { data, error } = await supabase
+        .from("found_friends")
+        .select("*")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
+      if (error) console.error("[loader] Supabase error:", error.message);
+      return { approved: data || [] };
+    } catch (err) {
+      console.error("[loader] Supabase threw during SSR:", err);
+      return { approved: [] };
+    }
   },
   head: () => ({
     meta: [
