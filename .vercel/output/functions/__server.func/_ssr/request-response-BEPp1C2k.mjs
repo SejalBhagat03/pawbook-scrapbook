@@ -1,4 +1,4 @@
-import { n as toResponse, t as H3Event } from "../_libs/h3-v2.mjs";
+import { n as toResponse, t as H3Event } from "../_libs/h3-v2+rou3.mjs";
 import { AsyncLocalStorage } from "node:async_hooks";
 //#region node_modules/.nitro/vite/services/ssr/assets/request-response-BEPp1C2k.js
 var GLOBAL_EVENT_STORAGE_KEY = Symbol.for("tanstack-start:event-storage");
