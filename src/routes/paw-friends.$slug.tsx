@@ -10,6 +10,7 @@ import {
   useCMS,
 } from "@/lib/pawbook-data";
 import { copyToClipboard, shareContent } from "@/lib/utils";
+import { playBark, playMeow, playHappyChime, playPawSteps, playPageFlip } from "@/lib/sound";
 
 export const Route = createFileRoute("/paw-friends/$slug")({
   loader: ({ params }): { animal: Animal } => {
@@ -136,6 +137,32 @@ function AnimalProfile() {
   const [extraLove, setExtraLove] = useState(0);
   const [extraTreats, setExtraTreats] = useState(0);
   const [accessory, setAccessory] = useState<string | null>(null);
+  const [memoryPlaying, setMemoryPlaying] = useState(false);
+  const [memoryVisible, setMemoryVisible] = useState(false);
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Track page scroll to grow care timeline thread line
+  useEffect(() => {
+    const handleScroll = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) return;
+      setScrollProgress(window.scrollY / docHeight);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Each pet has their own voice memory
+  const petVoiceMemories: Record<string, string> = {
+    coco: `Hi friend! 🐾\nI'm Coco — the happiest boy near the garden gate.\n\nEvery morning I sit at the same spot,\nwagging my tail, waiting for someone to say hello.\n\nToday I made a new friend. That's enough for me. ❤️`,
+    moti: `Hey there! 🍪\nMoti here — the official biscuit inspector of the tea shop.\n\nI work very hard every day.\nI make sure everyone who sits down feels welcome.\n\nBelly rubs accepted. Always. 🐕`,
+    kitty: `...\n\nI don't say much. But I notice everything.\n\nThe butterfly that came yesterday.\nThe warm patch of sun on the balcony.\nYou, reading this right now. 🐈\n\nThat's enough.`,
+    tommy: `Woof! 🌧️\nI'm Tommy — I survived the big storm!\n\nA kind person gave me a warm blanket that night.\nI still look for them every morning.\n\nI'm safe now. Thank you for caring. 🧣`,
+  };
+  const petVoice =
+    petVoiceMemories[a.slug] ||
+    `Hi! I'm ${a.name}. 🐾\nThank you for visiting my diary today.\n\nEvery kind visit makes my tail wag a little more. ❤️`;
 
   // Guestbook comments state
   const [comments, setComments] = useState<
@@ -235,6 +262,12 @@ function AnimalProfile() {
       localStorage.setItem(`pawbook-extra-love-${a.slug}`, next.toString());
       return next;
     });
+    if (a.slug === "kitty") {
+      playMeow();
+    } else {
+      playBark();
+    }
+    setTimeout(() => playHappyChime(), 180);
     toast.success(`You booped ${a.name}'s nose! ❤️`);
   };
 
@@ -244,6 +277,12 @@ function AnimalProfile() {
       localStorage.setItem(`pawbook-extra-treats-${a.slug}`, next.toString());
       return next;
     });
+    if (a.slug === "kitty") {
+      playMeow();
+    } else {
+      playBark();
+    }
+    setTimeout(() => playHappyChime(), 200);
     toast.success(`You gave ${a.name} a biscuit! 🍪`);
   };
 
@@ -253,7 +292,26 @@ function AnimalProfile() {
       localStorage.setItem(`pawbook-extra-love-${a.slug}`, next.toString());
       return next;
     });
+    playHappyChime();
     toast.success(`You gave ${a.name} a warm hug! 🐾`);
+  };
+
+  const handleHearMemory = () => {
+    if (memoryPlaying) return;
+    setMemoryPlaying(true);
+    setMemoryVisible(false);
+    playPawSteps(() => {
+      if (a.slug === "kitty") {
+        playMeow();
+      } else {
+        playBark();
+      }
+      setTimeout(() => {
+        playPageFlip();
+        setMemoryVisible(true);
+      }, 200);
+    });
+    setTimeout(() => setMemoryPlaying(false), 2000);
   };
 
   return (
@@ -527,7 +585,76 @@ function AnimalProfile() {
             </p>
           </div>
 
-          {/* Care & Health Journey Timelines */}
+          {/* 🎧 Hear Pet's Memory — emotional voice interaction */}
+          <div className="rounded-3xl border-2 border-dashed border-peach/60 bg-[#FFFBF5] p-6 scrapbook-shadow relative overflow-hidden">
+            <div className="absolute top-3 right-4 text-2xl opacity-20 select-none">🐾🐾🐾</div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/50 mb-3">
+              🎧 {a.name}&apos;s Memory Voice
+            </p>
+
+            {!memoryVisible ? (
+              <div className="flex flex-col items-center gap-3 py-2">
+                <p className="text-sm text-coffee/60 text-center font-hand">
+                  Press to hear what {a.name} wants to tell you…
+                </p>
+                <button
+                  onClick={handleHearMemory}
+                  disabled={memoryPlaying}
+                  className={`flex items-center gap-2 rounded-2xl border-2 border-peach bg-peach/10 px-5 py-2.5 font-display text-sm font-bold text-coffee scrapbook-shadow transition-all cursor-pointer
+                    ${memoryPlaying ? "opacity-60 animate-pulse" : "hover:bg-peach/20 hover:scale-105 active:scale-95"}`}
+                >
+                  {memoryPlaying ? (
+                    <>
+                      <span className="animate-bounce">🐾</span>
+                      <span className="animate-bounce" style={{ animationDelay: "0.1s" }}>
+                        🐾
+                      </span>
+                      <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>
+                        🐾
+                      </span>
+                      <span className="ml-1">Walking over…</span>
+                    </>
+                  ) : (
+                    <>🎧 Hear {a.name}&apos;s Memory</>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div
+                className="space-y-3 animate-fade-in"
+                style={{ animation: "fadeIn 0.6s ease forwards" }}
+              >
+                <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-2xl">{a.emoji}</span>
+                  <p className="font-display font-bold text-coffee">{a.name} says…</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-coffee/10 p-4 shadow-sm">
+                  {petVoice.split("\n").map((line, i) => (
+                    <p
+                      key={i}
+                      className="font-hand text-lg leading-relaxed text-coffee"
+                      style={{
+                        animationDelay: `${i * 0.08}s`,
+                        minHeight: line === "" ? "1rem" : undefined,
+                      }}
+                    >
+                      {line || "\u00A0"}
+                    </p>
+                  ))}
+                </div>
+                <button
+                  onClick={() => {
+                    setMemoryVisible(false);
+                  }}
+                  className="text-[10px] font-bold uppercase tracking-wider text-coffee/40 hover:text-peach transition-colors cursor-pointer"
+                >
+                  Close ✕
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2">
             {/* Care Timeline Card */}
             <div className="rounded-3xl border border-coffee/10 bg-white p-6 scrapbook-shadow">
@@ -535,20 +662,27 @@ function AnimalProfile() {
                 <h2 className="font-display text-xl font-bold text-coffee">Care Journey</h2>
                 <span className="text-xs text-coffee/40">Milestones</span>
               </div>
-              <ol className="relative space-y-4 border-l-2 border-dashed border-peach/50 pl-5">
-                {(a.careTimeline || []).map((t, idx) => (
-                  <li key={idx} className="relative">
-                    <span className="absolute left-[-29px] top-0 flex size-5 items-center justify-center rounded-full bg-peach/20 text-xs border border-peach/40">
-                      🐾
-                    </span>
-                    <p className="text-[8px] font-bold uppercase tracking-wider text-coffee/40">
-                      {t.date}
-                    </p>
-                    <p className="font-display text-base font-bold text-coffee">{t.label}</p>
-                    <p className="text-[11px] text-coffee/70 leading-normal">{t.note}</p>
-                  </li>
-                ))}
-              </ol>
+              <div className="relative">
+                {/* Sewn thread timeline line that grows on scroll */}
+                <div
+                  className="absolute left-[1px] top-0 w-0.5 bg-peach transition-all duration-300 z-10"
+                  style={{ height: `${Math.min(scrollProgress * 230, 100)}%` }}
+                />
+                <ol className="relative space-y-4 border-l-2 border-dashed border-peach/50 pl-5">
+                  {(a.careTimeline || []).map((t, idx) => (
+                    <li key={idx} className="relative">
+                      <span className="absolute left-[-29px] top-0 flex size-5 items-center justify-center rounded-full bg-peach/20 text-xs border border-peach/40">
+                        🐾
+                      </span>
+                      <p className="text-[8px] font-bold uppercase tracking-wider text-coffee/40">
+                        {t.date}
+                      </p>
+                      <p className="font-display text-base font-bold text-coffee">{t.label}</p>
+                      <p className="text-[11px] text-coffee/70 leading-normal">{t.note}</p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
 
             {/* Health Journey Card */}

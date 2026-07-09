@@ -310,3 +310,127 @@
   scroll-behavior: auto !important;
   transform: none !important;
 }
+
+/* ==========================================================================
+   PAWBOOK SCRAPBOOK ANIMATIONS
+   ========================================================================== */
+
+/* 1. Intro Book Animation */
+.book-container {
+  perspective: 1500px;
+}
+.book-cover-3d {
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 1.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.book-cover-open {
+  transform: rotateY(-140deg);
+}
+
+/* 2. Mouse Trail Paw Prints */
+.mouse-paw {
+  position: fixed;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 100;
+  user-select: none;
+  animation: fadeOutPaw 1s ease-out forwards;
+}
+@keyframes fadeOutPaw {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.6) rotate(var(--angle, 0deg));
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) translateY(-10px) rotate(var(--angle, 0deg));
+  }
+}
+
+/* 3. Polaroid Falling Effect */
+.polaroid-card {
+  opacity: 0;
+  transform: translateY(-80px) rotate(var(--random-rotate, 0deg)) scale(0.9);
+  transition: opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.polaroid-card.landed {
+  opacity: 1;
+  transform: translateY(0) rotate(var(--random-rotate, 0deg)) scale(1);
+}
+
+/* 4. Timeline Thread Path */
+.timeline-thread-line {
+  transition: height 1.2s ease-out;
+}
+
+/* 5. Envelope Opening & Paper Reveal */
+.envelope {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+}
+.envelope-flap {
+  transform-origin: top center;
+  transition: transform 0.4s ease-in-out;
+}
+.envelope-open .envelope-flap {
+  transform: rotateX(180deg);
+}
+.envelope-paper {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+  transform: translateY(0);
+}
+.envelope-open .envelope-paper {
+  transform: translateY(-60px);
+}
+
+/* 6. Hand-Drawn Tracing Animation */
+.map-trace-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: mapDraw 2.5s ease-out forwards;
+}
+@keyframes mapDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 7. Kindness Wall Growing Tree */
+.tree-branch {
+  transform-origin: bottom center;
+  animation: branchGrow 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes branchGrow {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.leaf-appear {
+  animation: leafFade 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes leafFade {
+  from {
+    opacity: 0;
+    transform: scale(0) rotate(-15deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* 8. Paw Loader Sequence */
+.paw-loader-dot {
+  opacity: 0;
+  animation: pawWalk 1.6s infinite ease-in-out;
+}
+@keyframes pawWalk {
+  0%, 100% { opacity: 0; transform: translateY(0); }
+  25% { opacity: 1; transform: translateY(-4px); }
+  50% { opacity: 0.3; transform: translateY(0); }
+}
+

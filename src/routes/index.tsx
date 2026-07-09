@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { PageShell, SectionHeading } from "@/components/pawbook/SiteChrome";
 import {
@@ -71,6 +71,38 @@ function HomePage() {
   const { animals, memories } = useCMS();
   const [featuredSlug, setFeaturedSlug] = useState("coco");
   const [quizOpen, setQuizOpen] = useState(false);
+
+  // Scrapbook animation refs & states
+  const villageRef = useRef<HTMLDivElement>(null);
+  const [villageInView, setVillageInView] = useState(false);
+  const [envelopeOpen, setEnvelopeOpen] = useState<Record<string, boolean>>({});
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Observe village entering screen
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVillageInView(true);
+        }
+      },
+      { threshold: 0.1 },
+    );
+    if (villageRef.current) observer.observe(villageRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Track page scroll to expand memories thread/string line
+  useEffect(() => {
+    const handleScroll = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight <= 0) return;
+      const progress = window.scrollY / docHeight;
+      setScrollProgress(Math.min(progress * 1.5, 1)); // scale up speed slightly
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const parseHelpBoardItem = (r: FoundFriendRow) => {
     const storyStr = r.story || "";
@@ -1073,23 +1105,25 @@ function HomePage() {
           community love stats, or explore their full passport and diary.
         </p>
 
-        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div
+          ref={villageRef}
+          className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+        >
           {animals.map((a, i) => {
-            const rot =
-              i === 0
-                ? "-rotate-1 translate-x-1"
-                : i === 1
-                  ? "rotate-1 -translate-x-1"
-                  : i === 2
-                    ? "rotate-2 translate-y-1"
-                    : "-rotate-2 -translate-y-1";
             const isFlipped = !!flippedSlugs[a.slug];
+            const randomTilt = (i % 3) * 2.4 - 2.4; // random rotation degree for scrapbook feel
 
             return (
               <div
                 key={a.slug}
                 onClick={(e) => toggleFlip(a.slug, e)}
-                className={`relative w-full h-[390px] perspective-1000 cursor-pointer select-none ${rot} group`}
+                style={
+                  {
+                    "--random-rotate": `${randomTilt}deg`,
+                    transitionDelay: `${i * 120}ms`,
+                  } as React.CSSProperties
+                }
+                className={`polaroid-card ${villageInView ? "landed" : ""} relative w-full h-[390px] perspective-1000 cursor-pointer select-none group transition-transform duration-300 hover:scale-104 hover:-translate-y-2`}
               >
                 <div
                   className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
@@ -1103,6 +1137,10 @@ function HomePage() {
 
                     {/* Pet Image */}
                     <div className="relative w-full aspect-square overflow-hidden rounded-2xl bg-cream border border-coffee/5">
+                      {/* Heart hover sticker */}
+                      <div className="absolute top-2.5 right-2.5 rounded-full bg-peach/95 p-1.5 text-xs shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100 z-30 select-none">
+                        ❤️
+                      </div>
                       <PetPhoto
                         slug={a.slug}
                         image={a.image}
@@ -1335,8 +1373,9 @@ function HomePage() {
 
               {/* Opened Booklet Page Container */}
               <div className="relative w-full bg-[#f4ebd0] border-2 border-coffee/20 rounded-2xl p-4 sm:p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8 min-h-[480px] shadow-inner overflow-hidden">
-                {/* Book Binding Crease */}
-                <div className="absolute left-1/2 top-0 h-full w-0.5 border-l border-dashed border-coffee/20 hidden md:block" />
+                {/* Book Binding Crease / Sewn Spine Thread Binder */}
+                <div className="absolute left-1/2 top-0 h-full w-[2px] bg-peach/40 hidden md:block" />
+                <div className="absolute left-1/2 top-0 h-full w-0.5 border-l border-dashed border-coffee/35 hidden md:block" />
 
                 {/* LEFT PAGE - PHOTO BLOCK */}
                 <div
@@ -1404,12 +1443,39 @@ function HomePage() {
                       </span>
                     </header>
 
-                    {/* Lined Notebook Paper Story */}
-                    <div className="mb-4 bg-[radial-gradient(circle_at_0px_0px,transparent_8px,transparent_8px),linear-gradient(#00000008_1px,transparent_1px)] bg-size-[100%_24px] pl-1 py-1">
-                      <p className="font-hand text-xl leading-relaxed text-coffee/85">
-                        "{m.story}"
-                      </p>
-                    </div>
+                    {/* Magic Letter Envelope Reveal */}
+                    {!envelopeOpen[m.id] ? (
+                      <div
+                        onClick={() => {
+                          setEnvelopeOpen((prev) => ({ ...prev, [m.id]: true }));
+                          playPageFlip();
+                        }}
+                        className="mb-4 cursor-pointer rounded-2xl border border-dashed border-peach/50 bg-[#FDFBF7] p-5 text-center flex flex-col items-center justify-center gap-2 hover:bg-[#FAF4ED] hover:scale-102 active:scale-98 transition-all shadow-xs"
+                      >
+                        <span className="text-4xl animate-float">💌</span>
+                        <p className="font-display text-sm font-bold text-coffee">
+                          Open {a.name}&apos;s Memory Letter
+                        </p>
+                        <p className="text-[10px] text-coffee/40 font-bold uppercase">
+                          Tap to open letter
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="animate-fade-in relative">
+                        {/* Lined Notebook Paper Story */}
+                        <div className="mb-2 bg-[radial-gradient(circle_at_0px_0px,transparent_8px,transparent_8px),linear-gradient(#00000008_1px,transparent_1px)] bg-size-[100%_24px] pl-1 py-1">
+                          <p className="font-hand text-xl leading-relaxed text-coffee/85">
+                            "{m.story}"
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setEnvelopeOpen((prev) => ({ ...prev, [m.id]: false }))}
+                          className="text-[9px] font-bold uppercase tracking-wider text-[#A06040] hover:text-peach cursor-pointer mb-2"
+                        >
+                          Close Letter ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions & Comment list */}
@@ -1524,8 +1590,8 @@ function HomePage() {
           <StatCard icon="✨" label="Kindness Points" value={kindnessPoints} tone="sage" />
         </div>
 
-        {/* Lined paper Meadow Growth Indicator */}
-        <div className="relative mt-10 overflow-hidden rounded-3xl border-2 border-dashed border-sage/50 bg-sage/20 p-8 text-center">
+        {/* Lined paper Kindness Tree Growth Indicator */}
+        <div className="relative mt-10 overflow-hidden rounded-3xl border-2 border-dashed border-sage/50 bg-[#F5F8F5] p-6 sm:p-8 text-center scrapbook-shadow">
           <div className="absolute top-4 right-6 text-4xl animate-float">🦋</div>
           <div
             className="absolute bottom-4 left-6 text-3xl animate-float"
@@ -1533,62 +1599,90 @@ function HomePage() {
           >
             🐾
           </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-coffee/60">
-            Your Kindness Garden today
+          <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/60">
+            🌳 The Growing Kindness Tree
           </p>
-          <h3 className="mt-2 font-display text-4xl sm:text-5xl">{growth.label}</h3>
-          <p className="mx-auto mt-2 max-w-md text-coffee/70">{growth.desc}</p>
+          <h3 className="mt-2 font-display text-3xl sm:text-4xl">{growth.label}</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-coffee/70">{growth.desc}</p>
 
-          <style>{`
-            @keyframes beeDrift {
-              0% { transform: translate(0, 0) scale(0.5); opacity: 0; }
-              20% { opacity: 1; }
-              100% { transform: translate(var(--drift-x, 20px), -65px) scale(1.2); opacity: 0; }
-            }
-            .animate-bee {
-              animation: beeDrift 2.2s ease-out forwards;
-            }
-          `}</style>
+          {/* Interactive SVG Tree Canvas */}
+          <div className="relative mx-auto mt-8 w-full max-w-[400px] h-[220px] bg-white border border-coffee/10 rounded-2xl p-4 flex items-center justify-center scrapbook-shadow overflow-hidden">
+            <svg
+              className="absolute inset-0 w-full h-full"
+              viewBox="0 0 200 120"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Ground line */}
+              <line
+                x1="20"
+                y1="110"
+                x2="180"
+                y2="110"
+                stroke="#7f5539"
+                strokeWidth="2"
+                strokeDasharray="3 3"
+              />
+              {/* Trunk & Main Branches */}
+              <path
+                d="M100,110 C100,80 90,60 80,45 M100,110 C100,80 110,60 120,40 M100,110 L100,60 C100,50 95,35 90,25 M100,60 C100,50 105,35 110,25"
+                stroke="#7f5539"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="map-trace-path"
+              />
+            </svg>
 
-          {beeParticles.map((b) => {
-            const driftX = Math.random() * 40 - 20;
-            return (
-              <span
-                key={b.id}
-                className="fixed pointer-events-none text-base z-50 animate-bee"
-                style={
-                  {
-                    left: `${b.x}px`,
-                    top: `${b.y}px`,
-                    animationDelay: `${b.delay}ms`,
-                    "--drift-x": `${driftX}px`,
-                  } as React.CSSProperties & { [key: string]: string | number }
-                }
-              >
-                🐝
-              </span>
-            );
-          })}
+            {/* Dynamic Leaves attached to tree branch coordinates */}
+            {(() => {
+              // Defined coordinates on branches
+              const leafCoordinates = [
+                { top: "30%", left: "42%" }, // center-left branch
+                { top: "25%", left: "54%" }, // center-right branch
+                { top: "45%", left: "32%" }, // low-left branch
+                { top: "40%", left: "64%" }, // low-right branch
+                { top: "18%", left: "46%" }, // high-center-left
+                { top: "18%", left: "50%" }, // high-center-right
+                { top: "52%", left: "36%" }, // bottom-left
+                { top: "48%", left: "60%" }, // bottom-right
+                { top: "32%", left: "36%" },
+                { top: "30%", left: "58%" },
+              ];
 
-          <div className="mx-auto mt-8 grid max-w-2xl grid-cols-6 gap-3 sm:grid-cols-10">
-            {Array.from({ length: 30 }).map((_, i) => {
-              const flowers = ["🌸", "🌻", "🌼", "🌺", "🌷"];
-              const currentEmoji = flowerStates[i] || flowers[i % flowers.length];
-              const grown = i < totalMemories * 6 || i < kindnessPosts.length * 3;
               return (
-                <button
-                  key={i}
-                  onClick={(e) => handleFlowerClick(i, e)}
-                  className={
-                    "flex aspect-square items-center justify-center rounded-xl bg-white text-2xl transition-all hover:scale-115 active:scale-90 cursor-pointer " +
-                    (grown ? "opacity-100 animate-sway" : "opacity-20")
-                  }
-                  style={{ animationDelay: `${(i % 5) * 0.3}s` }}
-                >
-                  {currentEmoji}
-                </button>
+                <div className="absolute inset-0 pointer-events-none">
+                  {kindnessPosts.slice(0, leafCoordinates.length).map((post, idx) => {
+                    const coords = leafCoordinates[idx];
+                    const leafIcon = post.badge.includes("🍲")
+                      ? "🍲"
+                      : post.badge.includes("🏥")
+                        ? "🏥"
+                        : post.badge.includes("📖")
+                          ? "📖"
+                          : "🐾";
+
+                    return (
+                      <button
+                        key={post.id}
+                        onClick={() => {
+                          toast.info(`🍃 ${post.author} logged: "${post.text}"`);
+                          playPageFlip();
+                        }}
+                        style={{ top: coords.top, left: coords.left }}
+                        className="pointer-events-auto absolute flex items-center justify-center w-8 h-8 rounded-full bg-sage/20 border border-sage text-sm shadow-xs hover:scale-125 hover:bg-sage/40 transition-all cursor-pointer leaf-appear"
+                        title={`${post.author}: ${post.text}`}
+                      >
+                        {leafIcon}
+                      </button>
+                    );
+                  })}
+                </div>
               );
-            })}
+            })()}
+          </div>
+
+          <div className="text-[10px] text-coffee/40 font-bold uppercase mt-4">
+            *Every kindness logged grows a new leaf on our tree 🍃
           </div>
         </div>
 
@@ -1986,6 +2080,7 @@ function HomePage() {
                 >
                   <path
                     d="M 0 200 Q 200 100 400 200"
+                    className="map-trace-path"
                     stroke="rgba(123,75,50,0.15)"
                     strokeWidth="4"
                     strokeDasharray="8 6"
@@ -1993,6 +2088,7 @@ function HomePage() {
                   />
                   <path
                     d="M 200 0 Q 240 120 200 250"
+                    className="map-trace-path"
                     stroke="rgba(123,75,50,0.15)"
                     strokeWidth="4"
                     strokeDasharray="8 6"
@@ -2199,6 +2295,32 @@ function HomePage() {
                     ? "🌟 Weave Reunion Picnic Story"
                     : `✨ Weave a story for ${currentWeaveAnimal?.name || "Friend"}`}
               </button>
+
+              {weaverLoading && (
+                <div className="flex gap-1.5 items-center justify-center mt-4">
+                  <span
+                    className="paw-loader-dot text-lg animate-paw-walk"
+                    style={{ animationDelay: "0s" }}
+                  >
+                    🐾
+                  </span>
+                  <span
+                    className="paw-loader-dot text-lg animate-paw-walk"
+                    style={{ animationDelay: "0.3s" }}
+                  >
+                    🐾
+                  </span>
+                  <span
+                    className="paw-loader-dot text-lg animate-paw-walk"
+                    style={{ animationDelay: "0.6s" }}
+                  >
+                    🐾
+                  </span>
+                  <p className="text-xs text-coffee/50 font-bold tracking-wider ml-1 font-display">
+                    Weaving memory...
+                  </p>
+                </div>
+              )}
 
               {weaverError && (
                 <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
