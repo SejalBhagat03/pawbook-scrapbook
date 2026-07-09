@@ -42,7 +42,12 @@ function createSupabaseClient() {
     process.env.VITE_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY;
 
-  console.log("[Supabase Init] URL found:", !!SUPABASE_URL, "| Key found:", !!SUPABASE_PUBLISHABLE_KEY);
+  console.log(
+    "[Supabase Init] URL found:",
+    !!SUPABASE_URL,
+    "| Key found:",
+    !!SUPABASE_PUBLISHABLE_KEY,
+  );
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
