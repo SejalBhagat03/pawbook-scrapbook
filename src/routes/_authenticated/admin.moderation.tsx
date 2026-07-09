@@ -1,0 +1,162 @@
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { PageShell, SectionHeading } from "@/components/pawbook/SiteChrome";
+import { SignedImage, SignedVideo } from "@/components/pawbook/SignedImage";
+import {
+  checkIsAdmin,
+  listPendingSubmissions,
+  reviewSubmission,
+} from "@/lib/submissions.functions";
+import type { Database } from "@/integrations/supabase/types";
+
+type Row = Database["public"]["Tables"]["found_friends"]["Row"];
+
+export const Route = createFileRoute("/_authenticated/admin/moderation")({
+  head: () => ({ meta: [{ title: "Moderation — PawBook" }] }),
+  component: ModerationPage,
+});
+
+function ModerationPage() {
+  const router = useRouter();
+  const isAdminFn = useServerFn(checkIsAdmin);
+  const listFn = useServerFn(listPendingSubmissions);
+  const reviewFn = useServerFn(reviewSubmission);
+
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [rows, setRows] = useState<Row[]>([]);
+  const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+
+  useEffect(() => {
+    isAdminFn().then((r) => setIsAdmin(r.isAdmin));
+  }, [isAdminFn]);
+
+  useEffect(() => {
+    if (isAdmin) listFn().then((data) => setRows(data ?? []));
+  }, [isAdmin, listFn]);
+
+  async function handleReview(id: string, status: "approved" | "rejected") {
+    try {
+      await reviewFn({ data: { id, status } });
+      toast.success(status === "approved" ? "Approved 🌸" : "Marked as rejected");
+      const data = await listFn();
+      setRows(data ?? []);
+      router.invalidate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  if (isAdmin === null) {
+    return (
+      <PageShell>
+        <div className="p-10 text-center text-sm text-coffee/60">Checking access…</div>
+      </PageShell>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <PageShell>
+        <div className="mx-auto max-w-md p-10 text-center">
+          <div className="text-4xl">🔒</div>
+          <h1 className="mt-2 font-display text-2xl">Just for moderators</h1>
+          <p className="mt-1 text-sm text-coffee/70">
+            Your account doesn't have moderator access. If you should — ask a PawBook admin to grant
+            you the <code className="rounded bg-cream/70 px-1">admin</code> role.
+          </p>
+        </div>
+      </PageShell>
+    );
+  }
+
+  const filtered = filter === "all" ? rows : rows.filter((r) => r.status === filter);
+
+  return (
+    <PageShell>
+      <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6">
+        <SectionHeading eyebrow="Admin" title="Moderation queue" />
+        <div className="mb-6 flex flex-wrap gap-2">
+          {(["pending", "approved", "rejected", "all"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={
+                "rounded-full px-4 py-1.5 text-xs font-bold capitalize transition " +
+                (filter === f ? "bg-coffee text-cream" : "bg-white text-coffee/70 hover:bg-cream")
+              }
+            >
+              {f} {f !== "all" && `(${rows.filter((r) => r.status === f).length})`}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          {filtered.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-coffee/20 bg-white/50 p-8 text-center text-sm text-coffee/60">
+              Nothing here right now 🌿
+            </div>
+          )}
+          {filtered.map((r) => (
+            <div
+              key={r.id}
+              className="scrapbook-shadow flex flex-col gap-4 rounded-2xl bg-white p-4 sm:flex-row"
+            >
+              <SignedImage
+                storageRef={r.photo_url}
+                alt={r.name}
+                className="h-40 w-full rounded-xl object-cover sm:w-40"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-display text-xl">{r.name}</h3>
+                  <span className="rounded-full bg-sage/40 px-2 py-0.5 text-[10px] font-bold uppercase">
+                    {r.species}
+                  </span>
+                  <span
+                    className={
+                      "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase " +
+                      (r.status === "pending"
+                        ? "bg-yellow/50"
+                        : r.status === "approved"
+                          ? "bg-sage/60"
+                          : "bg-peach/60")
+                    }
+                  >
+                    {r.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-coffee/60">
+                  📍 {r.location} · submitted {new Date(r.created_at).toLocaleString()}
+                </p>
+                <p className="mt-2 text-sm text-coffee/80">{r.story}</p>
+                {r.video_url && (
+                  <div className="mt-2">
+                    <SignedVideo storageRef={r.video_url} className="max-h-56 rounded-lg" />
+                  </div>
+                )}
+                {r.status === "pending" && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => handleReview(r.id, "approved")}
+                      className="rounded-full bg-sage px-4 py-1.5 text-xs font-bold text-coffee hover:scale-105"
+                    >
+                      Approve 🌸
+                    </button>
+                    <button
+                      onClick={() => handleReview(r.id, "rejected")}
+                      className="rounded-full border border-coffee/20 bg-white px-4 py-1.5 text-xs font-bold text-coffee hover:bg-cream"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PageShell>
+  );
+}

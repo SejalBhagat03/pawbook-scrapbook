@@ -1,0 +1,312 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@source inline("bg-sky bg-sky/20 bg-sky/30 bg-sky/40 bg-sky/50 bg-sky/60 bg-sky/70 bg-peach bg-peach/20 bg-peach/30 bg-peach/40 bg-peach/50 bg-peach/60 bg-peach/70 bg-peach/80 bg-peach/90 bg-sage bg-sage/20 bg-sage/30 bg-sage/40 bg-sage/50 bg-sage/60 bg-sage/70 bg-yellow bg-yellow/20 bg-yellow/30 bg-yellow/40 bg-yellow/50 bg-yellow/60 bg-yellow/70 bg-yellow/80 bg-yellow/90 bg-cream bg-cream/40 bg-cream/50 bg-cream/60 bg-cream/80 bg-coffee bg-coffee/5 bg-coffee/10 bg-coffee/15 bg-coffee/20 text-sage text-peach text-coffee text-cream text-yellow-700 border-sage/40 border-sage/50 border-sage/60 border-peach/50 border-coffee/5 border-coffee/10 border-coffee/15 border-coffee/20 rotate-1 -rotate-1 -rotate-2 rotate-2");
+@import "tw-animate-css";
+
+@import "@fontsource/dynapuff/400.css";
+@import "@fontsource/dynapuff/600.css";
+@import "@fontsource/dynapuff/700.css";
+@import "@fontsource/quicksand/400.css";
+@import "@fontsource/quicksand/500.css";
+@import "@fontsource/quicksand/600.css";
+@import "@fontsource/quicksand/700.css";
+@import "@fontsource/gaegu/400.css";
+@import "@fontsource/gaegu/700.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* PawBook signature colors */
+  --color-cream: var(--cream);
+  --color-coffee: var(--coffee);
+  --color-sage: var(--sage);
+  --color-peach: var(--peach);
+  --color-sky: var(--sky);
+  --color-yellow: var(--yellow);
+
+  --font-display: "DynaPuff", cursive;
+  --font-body: "Quicksand", sans-serif;
+  --font-hand: "Gaegu", cursive;
+
+  --ease-soft: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-sway: sway 6s ease-in-out infinite;
+  --animate-blink: blink 5s ease-in-out infinite;
+  --animate-wag: wag 1.4s ease-in-out infinite;
+  --animate-drift: drift 30s linear infinite;
+  --animate-floaty: floaty 6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  --animate-washi-slow: washi-slow 8s ease-in-out infinite;
+  --animate-shimmer-logo: sweep 7s linear infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+  @keyframes sway {
+    0%,
+    100% {
+      transform: rotate(-2deg);
+    }
+    50% {
+      transform: rotate(2deg);
+    }
+  }
+  @keyframes floaty {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+  @keyframes washi-slow {
+    0%,
+    100% {
+      transform: rotate(0.5deg);
+    }
+    50% {
+      transform: rotate(-0.5deg);
+    }
+  }
+  @keyframes sweep {
+    0% {
+      transform: rotate(20deg) translateX(-120%);
+    }
+    100% {
+      transform: rotate(20deg) translateX(120%);
+    }
+  }
+  @keyframes blink {
+    0%,
+    92%,
+    100% {
+      transform: scaleY(1);
+    }
+    94%,
+    98% {
+      transform: scaleY(0.1);
+    }
+  }
+  @keyframes wag {
+    0%,
+    100% {
+      transform: rotate(-8deg);
+    }
+    50% {
+      transform: rotate(8deg);
+    }
+  }
+  @keyframes drift {
+    from {
+      transform: translateX(-10vw);
+    }
+    to {
+      transform: translateX(110vw);
+    }
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+:root {
+  --radius: 1rem;
+  --ease-smooth: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ms-100: 120ms;
+  --ms-200: 220ms;
+  --ms-300: 300ms;
+  --ms-400: 420ms;
+
+  --cream: oklch(0.976 0.024 90);
+  --coffee: oklch(0.42 0.06 55);
+  --sage: oklch(0.86 0.06 155);
+  --peach: oklch(0.83 0.09 40);
+  --sky: oklch(0.93 0.05 220);
+  --yellow: oklch(0.94 0.08 95);
+
+  --background: var(--cream);
+  --foreground: var(--coffee);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--coffee);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--coffee);
+  --primary: var(--coffee);
+  --primary-foreground: var(--cream);
+  --secondary: var(--sage);
+  --secondary-foreground: var(--coffee);
+  --muted: oklch(0.95 0.02 85);
+  --muted-foreground: oklch(0.55 0.05 55);
+  --accent: var(--peach);
+  --accent-foreground: var(--coffee);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.88 0.03 70);
+  --input: oklch(0.88 0.03 70);
+  --ring: var(--peach);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    scroll-behavior: smooth;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-peach) 40%, transparent);
+  }
+}
+
+@utility scrapbook-shadow {
+  box-shadow: 6px 6px 0 0 color-mix(in oklab, var(--color-coffee) 12%, transparent);
+}
+@utility washi-tape {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in oklab, var(--color-peach) 40%, transparent),
+    color-mix(in oklab, var(--color-peach) 40%, transparent) 10px,
+    color-mix(in oklab, var(--color-peach) 60%, transparent) 10px,
+    color-mix(in oklab, var(--color-peach) 60%, transparent) 20px
+  );
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+@utility font-display {
+  font-family: var(--font-display);
+}
+@utility font-hand {
+  font-family: var(--font-hand);
+}
+
+@keyframes storyProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-story-progress {
+  animation-name: storyProgress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@utility perspective-1000 {
+  perspective: 1000px;
+}
+@utility transform-style-3d {
+  transform-style: preserve-3d;
+}
+@utility backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+@utility rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility paper {
+  background-color: #fffdf9;
+  background-image:
+    radial-gradient(rgba(74, 46, 32, 0.035) 1px, transparent 1px),
+    radial-gradient(rgba(74, 46, 32, 0.02) 1px, transparent 1px);
+  background-position:
+    0 0,
+    8px 8px;
+  background-size:
+    16px 16px,
+    16px 16px;
+}
+
+@utility scrapbook-shadow-lg {
+  box-shadow: 12px 12px 0 0 color-mix(in oklab, var(--color-coffee) 10%, transparent);
+}
+
+@utility squish {
+  transition: transform var(--ms-200) var(--ease-bounce) !important;
+  &:active {
+    transform: scale(0.95) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.reduce-motion *,
+.reduce-motion ::before,
+.reduce-motion ::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+  transform: none !important;
+}
