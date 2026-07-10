@@ -9,7 +9,7 @@ const Input = z.object({
 });
 
 export const weaveStory = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => Input.parse(input))
+  .validator((input: unknown) => Input.parse(input))
   .handler(async ({ data }) => {
     const animal = animals.find((a) => a.slug === data.animalSlug);
     if (!animal) throw new Error("Unknown friend");

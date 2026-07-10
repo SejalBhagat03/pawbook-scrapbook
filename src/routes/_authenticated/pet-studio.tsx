@@ -15,9 +15,12 @@ import {
   type SpinReward,
   type SurpriseReward,
   type Mood,
+  type HealthRecord,
+  type CareEvent,
 } from "@/lib/pawbook-data";
 import { supabase } from "@/integrations/supabase/client";
 import { PageShell } from "@/components/pawbook/SiteChrome";
+import { SignedImage } from "@/components/pawbook/SignedImage";
 import { useServerFn } from "@tanstack/react-start";
 import { listPendingSubmissions, reviewSubmission } from "@/lib/submissions.functions";
 import type { Database } from "@/integrations/supabase/types";
@@ -212,11 +215,13 @@ function PetStudioPage() {
   const [petFormTrust, setPetFormTrust] = useState(85);
   const [petFormPlayfulness, setPetFormPlayfulness] = useState(75);
 
-  const [petFormHealthRecords, setPetFormHealthRecords] = useState<any[]>([]);
-  const [petFormCareTimeline, setPetFormCareTimeline] = useState<any[]>([]);
+  const [petFormHealthRecords, setPetFormHealthRecords] = useState<HealthRecord[]>([]);
+  const [petFormCareTimeline, setPetFormCareTimeline] = useState<CareEvent[]>([]);
 
   const [newHealthDate, setNewHealthDate] = useState("");
-  const [newHealthType, setNewHealthType] = useState<"Vaccination" | "Checkup" | "Medication">("Vaccination");
+  const [newHealthType, setNewHealthType] = useState<
+    "Vaccination" | "Checkup" | "Treatment" | "Medicine"
+  >("Vaccination");
   const [newHealthNote, setNewHealthNote] = useState("");
 
   const [newCareDate, setNewCareDate] = useState("");
@@ -259,7 +264,7 @@ function PetStudioPage() {
       setPetFormFavFood(p.favoriteFood);
       setPetFormMood(p.mood);
       setPetFormPic(p.image);
-      
+
       setPetFormLastSeen(p.lastSeenLocation || "");
       setPetFormVaccinated(!!p.vaccinated);
       setPetFormSterilized(!!p.sterilized);
@@ -290,9 +295,14 @@ function PetStudioPage() {
       favoriteFood: petFormFavFood,
       mood: petFormMood,
       image: petFormPic,
-      
+
       lastSeenLocation: petFormLastSeen,
-      lastUpdated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) + " (Admin)",
+      lastUpdated:
+        new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }) + " (Admin)",
       vaccinated: petFormVaccinated,
       sterilized: petFormSterilized,
       medicalNotes: petFormMedicalNotes,
@@ -482,7 +492,6 @@ function PetStudioPage() {
                   </p>
                 </div>
               </div>
-
               <nav className="flex flex-col gap-1">
                 {[
                   { id: "dashboard", label: "🏠 Dashboard" },
@@ -491,7 +500,14 @@ function PetStudioPage() {
                   { id: "gallery", label: "📸 Gallery" },
                   { id: "dialogues", label: "💬 Dialogues" },
                   { id: "games", label: "🎡 Game Content" },
-                  { id: "moderation", label: "❤️ Visitor Wall" },
+                  {
+                    id: "moderation",
+                    label: `Paw Requests 🐾${
+                      localSubmissions.filter((s) => s.status === "pending").length > 0
+                        ? ` (${localSubmissions.filter((s) => s.status === "pending").length})`
+                        : ""
+                    }`,
+                  },
                   { id: "settings", label: "⚙ Settings" },
                 ].map((t) => (
                   <button
@@ -507,7 +523,7 @@ function PetStudioPage() {
                     {t.label}
                   </button>
                 ))}
-              </nav>
+              </nav>{" "}
             </div>
 
             <div className="pt-6 border-t border-coffee/5 mt-6">
@@ -837,7 +853,9 @@ function PetStudioPage() {
                   {/* Sliders */}
                   <div className="sm:col-span-2 grid grid-cols-2 gap-4 border-t border-coffee/5 pt-4">
                     <div className="text-left">
-                      <label className="text-[10px] font-bold text-coffee/60 uppercase">Friendliness ({petFormFriendliness}%)</label>
+                      <label className="text-[10px] font-bold text-coffee/60 uppercase">
+                        Friendliness ({petFormFriendliness}%)
+                      </label>
                       <input
                         type="range"
                         min="0"
@@ -848,7 +866,9 @@ function PetStudioPage() {
                       />
                     </div>
                     <div className="text-left">
-                      <label className="text-[10px] font-bold text-coffee/60 uppercase">Energy ({petFormEnergy}%)</label>
+                      <label className="text-[10px] font-bold text-coffee/60 uppercase">
+                        Energy ({petFormEnergy}%)
+                      </label>
                       <input
                         type="range"
                         min="0"
@@ -859,7 +879,9 @@ function PetStudioPage() {
                       />
                     </div>
                     <div className="text-left">
-                      <label className="text-[10px] font-bold text-coffee/60 uppercase">Trust ({petFormTrust}%)</label>
+                      <label className="text-[10px] font-bold text-coffee/60 uppercase">
+                        Trust ({petFormTrust}%)
+                      </label>
                       <input
                         type="range"
                         min="0"
@@ -870,7 +892,9 @@ function PetStudioPage() {
                       />
                     </div>
                     <div className="text-left">
-                      <label className="text-[10px] font-bold text-coffee/60 uppercase">Playfulness ({petFormPlayfulness}%)</label>
+                      <label className="text-[10px] font-bold text-coffee/60 uppercase">
+                        Playfulness ({petFormPlayfulness}%)
+                      </label>
                       <input
                         type="range"
                         min="0"
@@ -889,9 +913,13 @@ function PetStudioPage() {
                     </span>
                     <div className="space-y-2 mb-3 max-h-[150px] overflow-y-auto pr-1">
                       {petFormHealthRecords.map((h, idx) => (
-                        <div key={idx} className="flex justify-between items-center bg-cream/30 p-2 border border-coffee/5 rounded-xl text-xs">
+                        <div
+                          key={idx}
+                          className="flex justify-between items-center bg-cream/30 p-2 border border-coffee/5 rounded-xl text-xs"
+                        >
                           <div>
-                            <span className="font-bold">[{h.date}]</span> {h.type} — <span className="text-coffee/85">{h.note}</span>
+                            <span className="font-bold">[{h.date}]</span> {h.type} —{" "}
+                            <span className="text-coffee/85">{h.note}</span>
                           </div>
                           <button
                             onClick={() => handleRemoveHealth(idx)}
@@ -913,12 +941,17 @@ function PetStudioPage() {
                       />
                       <select
                         value={newHealthType}
-                        onChange={(e: any) => setNewHealthType(e.target.value)}
+                        onChange={(e) =>
+                          setNewHealthType(
+                            e.target.value as "Vaccination" | "Checkup" | "Treatment" | "Medicine",
+                          )
+                        }
                         className="w-1/4 rounded-lg border border-coffee/10 bg-white px-2 py-1 text-xs"
                       >
                         <option>Vaccination</option>
                         <option>Checkup</option>
-                        <option>Medication</option>
+                        <option>Treatment</option>
+                        <option>Medicine</option>
                       </select>
                       <input
                         type="text"
@@ -944,9 +977,13 @@ function PetStudioPage() {
                     </span>
                     <div className="space-y-2 mb-3 max-h-[150px] overflow-y-auto pr-1">
                       {petFormCareTimeline.map((t, idx) => (
-                        <div key={idx} className="flex justify-between items-center bg-cream/30 p-2 border border-coffee/5 rounded-xl text-xs">
+                        <div
+                          key={idx}
+                          className="flex justify-between items-center bg-cream/30 p-2 border border-coffee/5 rounded-xl text-xs"
+                        >
                           <div>
-                            <span className="font-bold">[{t.date}]</span> {t.label} — <span className="text-coffee/85">{t.note}</span>
+                            <span className="font-bold">[{t.date}]</span> {t.label} —{" "}
+                            <span className="text-coffee/85">{t.note}</span>
                           </div>
                           <button
                             onClick={() => handleRemoveCare(idx)}
@@ -1451,9 +1488,9 @@ function PetStudioPage() {
                       className="flex flex-col sm:flex-row gap-4 border border-coffee/10 p-4 rounded-2xl bg-cream/5 justify-between"
                     >
                       <div className="flex gap-3">
-                        <img
-                          src={s.photo_url}
-                          alt=""
+                        <SignedImage
+                          storageRef={s.photo_url}
+                          alt={s.name || ""}
                           className="size-16 object-cover rounded-lg shrink-0 border border-coffee/5"
                         />
                         <div>

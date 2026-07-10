@@ -9,15 +9,22 @@ import {
   updateCMSData,
   type Mood,
   type KindnessPost,
+  type Animal,
 } from "@/lib/pawbook-data";
 import { PetQuizModal } from "@/components/pawbook/PetQuizModal";
 import { SpinWheel } from "@/components/pawbook/SpinWheel";
 import { InstagramStories } from "@/components/pawbook/InstagramStories";
 import { playPop, playRustle, playBark, playMeow, playPageFlip } from "@/lib/sound";
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion";
+import confetti from "canvas-confetti";
 
 import { useServerFn } from "@tanstack/react-start";
 import { uploadToBucket } from "@/lib/storage";
-import { submitFoundFriend } from "@/lib/submissions.functions";
+import {
+  submitFoundFriend,
+  uploadGuestPhoto,
+  submitGuestFriend,
+} from "@/lib/submissions.functions";
 import { weaveStory } from "@/lib/ai-story.functions";
 import { useSession } from "@/hooks/use-session";
 import { SignedImage, SignedVideo } from "@/components/pawbook/SignedImage";
@@ -49,12 +56,249 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Meet Coco, Moti, Kitty and Tommy — a cozy village of street friends whose stories live forever in PawBook.",
+          "Meet Coco, Moti, Kitty and Tommy — a cozy village of beloved animals whose stories live forever in PawBook.",
       },
     ],
   }),
   component: HomePage,
 });
+
+function FriendCardStyle() {
+  return (
+    <style>{`
+      @utility rotate-y-180 {
+        transform: rotateY(180deg);
+      }
+    `}</style>
+  );
+}
+
+function FriendCard({
+  a,
+  isFlipped,
+  toggleFlip,
+  i,
+}: {
+  a: Animal;
+  isFlipped: boolean;
+  toggleFlip: (e: React.MouseEvent) => void;
+  i: number;
+}) {
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left - width / 2;
+    const mouseY = e.clientY - rect.top - height / 2;
+    const tiltX = (mouseY / (height / 2)) * -12;
+    const tiltY = (mouseX / (width / 2)) * 12;
+    setRotateX(tiltX);
+    setRotateY(tiltY);
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+    setIsHovered(false);
+  };
+
+  const getInitial = () => {
+    if (a.slug === "kitty") return { opacity: 0, x: -80, rotate: -5 };
+    if (a.slug === "moti") return { opacity: 0, scale: 0.8, rotate: -15 };
+    return { opacity: 0, y: 100, rotate: 5 };
+  };
+
+  const getAnimate = () => {
+    if (a.slug === "kitty") return { opacity: 1, x: 0, rotate: -1.5 };
+    if (a.slug === "moti") return { opacity: 1, scale: 1, rotate: 2 };
+    return { opacity: 1, y: 0, rotate: 1 };
+  };
+
+  return (
+    <motion.div
+      onClick={toggleFlip}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsHovered(true)}
+      initial={getInitial()}
+      whileInView={getAnimate()}
+      viewport={{ once: true, margin: "-8% 0px" }}
+      style={{
+        rotateX: isFlipped ? 0 : rotateX,
+        rotateY: isFlipped ? 180 : rotateY,
+        transformStyle: "preserve-3d",
+        perspective: "1000px",
+      }}
+      whileHover={{ scale: 1.05 }}
+      transition={{
+        type: "spring",
+        stiffness: 70,
+        damping: 12,
+        delay: i * 0.1,
+      }}
+      className="relative w-full h-[390px] cursor-pointer select-none group"
+    >
+      <div
+        className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
+          isFlipped ? "rotate-y-180" : ""
+        }`}
+      >
+        {/* FRONT SIDE */}
+        <div className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border border-coffee/10 bg-white p-3 pb-5 flex flex-col justify-between scrapbook-shadow z-10">
+          <div className="absolute -top-3.5 left-1/2 z-20 h-6 w-16 -translate-x-1/2 bg-yellow/40 border border-dashed border-yellow/20 opacity-75 shadow-xs" />
+
+          <div className="relative w-full aspect-square overflow-hidden rounded-2xl bg-cream border border-coffee/5">
+            <div className="absolute top-2.5 right-2.5 rounded-full bg-peach/95 p-1.5 text-xs shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100 z-30 select-none">
+              🐾
+            </div>
+            <PetPhoto
+              slug={a.slug}
+              image={a.image}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute top-2.5 left-2.5 rounded-full bg-white/95 px-2.5 py-0.5 text-[9px] font-bold shadow-xs">
+              {a.mood}
+            </div>
+          </div>
+
+          <div className="mt-2.5 space-y-1 px-1 flex-1 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-lg text-coffee font-bold">
+                  {a.name} {a.emoji}
+                </h3>
+                <span
+                  className={
+                    "text-[10px] font-bold flex items-center gap-1 " +
+                    (a.status === "safe"
+                      ? "text-sage"
+                      : a.status === "needs-care"
+                        ? "text-yellow-700"
+                        : "text-destructive")
+                  }
+                >
+                  <span className="text-xs">●</span>
+                  {a.status === "safe"
+                    ? "Safe 💚"
+                    : a.status === "needs-care"
+                      ? "Needs Care 🏥"
+                      : "Emergency 🚨"}
+                </span>
+              </div>
+              <p className="font-hand text-base text-peach mt-0.5">"{a.nickname}"</p>
+            </div>
+
+            <div className="border-t border-coffee/5 pt-2 text-[10px] space-y-0.5 text-coffee/70">
+              <p>
+                📍 <span className="font-semibold">Home:</span> {a.home}
+              </p>
+              <p>
+                👀 <span className="font-semibold">Last Seen:</span> {a.lastSeenLocation}
+              </p>
+              <p>
+                ⏰ <span className="font-semibold">Updated:</span> {a.lastUpdated}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* BACK SIDE */}
+        <div className="absolute inset-0 w-full h-full rotate-y-180 backface-hidden rounded-3xl border border-coffee/10 bg-white p-4 pb-5 flex flex-col justify-between scrapbook-shadow bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px]">
+          <div className="absolute -top-3.5 left-1/2 z-20 h-6 w-16 -translate-x-1/2 bg-peach/40 border border-dashed border-peach/20 opacity-75 shadow-xs" />
+
+          <div className="space-y-3.5 flex-1">
+            <div className="text-center border-b border-coffee/5 pb-2">
+              <h4 className="font-display text-base font-bold text-coffee">{a.name}'s Love</h4>
+              <p className="text-[10px] text-coffee/50">Community Care Card</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1 bg-[#FDFBF7] p-2.5 rounded-2xl border border-coffee/5 text-center">
+              <div>
+                <p className="text-[11px] font-bold text-coffee">
+                  {a.communityLove?.followers || 0}
+                </p>
+                <p className="text-[8px] text-coffee/50 uppercase font-bold tracking-wider">Love</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-coffee">
+                  {a.communityLove?.memories || 0}
+                </p>
+                <p className="text-[8px] text-coffee/50 uppercase font-bold tracking-wider">
+                  Memories
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-coffee">{a.communityLove?.helpers || 0}</p>
+                <p className="text-[8px] text-coffee/50 uppercase font-bold tracking-wider">
+                  Helpers
+                </p>
+              </div>
+            </div>
+
+            <div className="text-[11px] space-y-1 text-left">
+              <p>
+                <span className="font-bold text-coffee/70">🧬 Breed:</span>{" "}
+                <span className="text-coffee/85 font-medium">{a.breedType}</span>
+              </p>
+              <p>
+                <span className="font-bold text-coffee/70">🍪 Fav Snack:</span>{" "}
+                <span className="text-coffee/85 font-medium">
+                  {(a.favoriteFood || "Unknown").slice(0, 35)}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-1 mt-1">
+              {(a.badges || []).slice(0, 3).map((badge: string, idx: number) => (
+                <span
+                  key={idx}
+                  className="bg-peach/10 border border-peach/25 text-[8px] font-bold text-coffee px-2 py-0.5 rounded-full"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <Link
+            to="/paw-friends/$slug"
+            params={{ slug: a.slug }}
+            onClick={(e) => e.stopPropagation()}
+            className="squish block w-full rounded-2xl bg-coffee text-cream text-center py-2.5 text-xs font-bold scrapbook-shadow transition hover:opacity-90 mt-2"
+          >
+            Open Passport & Stories 📖 →
+          </Link>
+        </div>
+      </div>
+
+      {isHovered && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+          {[0, 1, 2].map((k) => (
+            <motion.span
+              key={k}
+              initial={{ y: 280, x: 40 + k * 40, opacity: 1, scale: 0.6 }}
+              animate={{
+                y: -40,
+                x: 40 + k * 40 + (Math.random() * 40 - 20),
+                opacity: 0,
+                scale: 1.3,
+                rotate: Math.random() * 360,
+              }}
+              transition={{ duration: 1.8, delay: k * 0.25, ease: "easeOut" }}
+              className="absolute text-xl select-none"
+            >
+              {a.slug === "kitty" ? "🐾" : "❤️"}
+            </motion.span>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 const orbitClasses = [
   { top: "0%", left: "10%", delay: "0s", size: "w-20 h-20" },
@@ -64,6 +308,192 @@ const orbitClasses = [
 ];
 
 type WeaverMode = "story" | "pov" | "caption" | "adoption";
+
+// Floating paw decorations that react to scroll position
+function ScrollFlowDecor() {
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 40, damping: 20 });
+
+  // Different parallax speeds for each paw
+  const y1 = useTransform(smoothProgress, [0, 1], ["0%", "-180%"]);
+  const y2 = useTransform(smoothProgress, [0, 1], ["0%", "-120%"]);
+  const y3 = useTransform(smoothProgress, [0, 1], ["0%", "-240%"]);
+  const y4 = useTransform(smoothProgress, [0, 1], ["0%", "-90%"]);
+  const rotate1 = useTransform(smoothProgress, [0, 1], [0, 360]);
+  const rotate2 = useTransform(smoothProgress, [0, 1], [0, -280]);
+  const opacity1 = useTransform(smoothProgress, [0, 0.15, 0.85, 1], [0, 0.18, 0.18, 0]);
+  const opacity2 = useTransform(smoothProgress, [0, 0.1, 0.9, 1], [0, 0.12, 0.12, 0]);
+  const scale1 = useTransform(smoothProgress, [0, 0.5, 1], [0.6, 1.2, 0.8]);
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+      {/* Top-left drifting paw */}
+      <motion.div
+        style={{ y: y1, rotate: rotate1, opacity: opacity1, scale: scale1 }}
+        className="absolute -top-8 left-[8%] text-5xl select-none"
+      >
+        🐾
+      </motion.div>
+
+      {/* Top-right slow paw */}
+      <motion.div
+        style={{ y: y2, rotate: rotate2, opacity: opacity2 }}
+        className="absolute top-[12%] right-[6%] text-7xl select-none"
+      >
+        🐾
+      </motion.div>
+
+      {/* Mid-left fast paw */}
+      <motion.div
+        style={{ y: y3, opacity: opacity1 }}
+        className="absolute top-[35%] left-[3%] text-3xl select-none"
+      >
+        🐾
+      </motion.div>
+
+      {/* Mid-right small paw */}
+      <motion.div
+        style={{ y: y4, rotate: rotate1, opacity: opacity2 }}
+        className="absolute top-[55%] right-[10%] text-2xl select-none"
+      >
+        🐾
+      </motion.div>
+
+      {/* Bottom-left paw */}
+      <motion.div
+        style={{ y: y2, rotate: rotate2, opacity: opacity1 }}
+        className="absolute top-[75%] left-[15%] text-4xl select-none"
+      >
+        🐾
+      </motion.div>
+
+      {/* Scroll progress bar at top */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-0.5 bg-linear-to-r from-peach via-yellow to-peach origin-left z-50"
+        style={{ scaleX: smoothProgress }}
+      />
+    </div>
+  );
+}
+
+function MagicLetter({
+  name,
+  story,
+  isOpen,
+  onToggle,
+}: {
+  name: string;
+  story: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl bg-[#FDFBF7]/60 border border-coffee/5 p-4 mb-4 select-none">
+      <AnimatePresence initial={false} mode="wait">
+        {!isOpen ? (
+          <motion.div
+            key="closed"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.25 }}
+            onClick={onToggle}
+            className="cursor-pointer flex flex-col items-center justify-center py-6 text-center group"
+          >
+            {/* Cute physical envelope simulator */}
+            <div className="relative w-40 h-24 mb-4 bg-[#EED9C4] border border-coffee/10 rounded-lg flex items-center justify-center shadow-xs overflow-visible">
+              {/* Back side of envelope body */}
+              <div
+                className="absolute inset-0 bg-[#E6CCA7]"
+                style={{ clipPath: "polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%)" }}
+              />
+              <div
+                className="absolute inset-0 bg-[#EED9C4]"
+                style={{ clipPath: "polygon(0 100%, 50% 55%, 0 0)" }}
+              />
+              <div
+                className="absolute inset-0 bg-[#F5DEC2]"
+                style={{ clipPath: "polygon(100% 100%, 50% 55%, 100% 0)" }}
+              />
+              <div
+                className="absolute inset-0 bg-[#DEBF97]"
+                style={{ clipPath: "polygon(0 100%, 50% 55%, 100% 100%)" }}
+              />
+
+              {/* Envelope top flap */}
+              <motion.div
+                className="absolute top-0 left-0 right-0 h-12 bg-[#D1AE82] origin-top z-10"
+                style={{
+                  clipPath: "polygon(0 0, 50% 100%, 100% 0)",
+                  transformStyle: "preserve-3d",
+                }}
+                whileHover={{ rotateX: -30 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              />
+
+              {/* Heart Sticker / Seal */}
+              <motion.div
+                className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-3xl select-none pointer-events-none drop-shadow-md"
+                animate={{ scale: [1, 1.12, 1] }}
+                transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+              >
+                💌
+              </motion.div>
+            </div>
+
+            <h4 className="font-display text-sm font-bold text-coffee group-hover:text-peach transition-colors">
+              Open {name}&apos;s Memory Letter
+            </h4>
+            <p className="text-[10px] text-coffee/40 font-bold uppercase tracking-wider mt-1">
+              Tap to open letter
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="open"
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ type: "spring", stiffness: 260, damping: 24 }}
+            className="flex flex-col items-center"
+          >
+            {/* Lined Notebook Paper Story */}
+            <motion.div
+              initial={{ scale: 0.93, y: 25 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ delay: 0.08, duration: 0.4, ease: "backOut" }}
+              className="w-full relative bg-white border border-coffee/10 rounded-xl p-5 shadow-sm bg-[radial-gradient(circle_at_0px_0px,transparent_8px,transparent_8px),linear-gradient(#F5EFEB_1px,transparent_1px)] bg-size-[100%_28px] pl-8"
+            >
+              {/* Lined margin */}
+              <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-red-400/20" />
+
+              <div className="absolute right-4 top-4 text-[9px] font-bold text-coffee/30 select-none font-display">
+                PAGE 1 OF 1
+              </div>
+
+              <div className="mt-2 pl-2">
+                <p className="font-hand text-lg leading-[28px] text-coffee/85 whitespace-pre-line italic">
+                  "{story}"
+                </p>
+              </div>
+
+              <div className="mt-5 flex justify-end text-xs font-bold text-peach font-display pr-2">
+                — {name} 🐾
+              </div>
+            </motion.div>
+
+            <button
+              onClick={onToggle}
+              className="mt-3.5 inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full border border-coffee/10 bg-white text-[9px] font-bold uppercase tracking-wider text-[#A06040] hover:bg-[#FAF4ED] hover:text-peach transition-all cursor-pointer shadow-xs"
+            >
+              ✕ Fold & Close Letter
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 function HomePage() {
   const router = useRouter();
@@ -77,6 +507,18 @@ function HomePage() {
   const [villageInView, setVillageInView] = useState(false);
   const [envelopeOpen, setEnvelopeOpen] = useState<Record<string, boolean>>({});
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  const [flashActive, setFlashActive] = useState(false);
+  const [plantingPost, setPlantingPost] = useState<KindnessPost | null>(null);
+
+  useEffect(() => {
+    const triggerFlash = () => {
+      setFlashActive(true);
+      setTimeout(() => setFlashActive(false), 600);
+    };
+    window.addEventListener("pawbook-trigger-flash", triggerFlash);
+    return () => window.removeEventListener("pawbook-trigger-flash", triggerFlash);
+  }, []);
 
   // Observe village entering screen
   useEffect(() => {
@@ -378,18 +820,31 @@ function HomePage() {
       points: 10,
     };
 
-    const updated = [newPost, ...kindnessPosts];
-    setKindnessPosts(updated);
-    localStorage.setItem("pawbook-kindness-posts", JSON.stringify(updated));
+    setPlantingPost(newPost);
+    playPop();
 
-    const nextPoints = kindnessPoints + 10;
-    setKindnessPoints(nextPoints);
-    localStorage.setItem("pawbook-kindness-points", nextPoints.toString());
+    setTimeout(() => {
+      const updated = [newPost, ...kindnessPosts];
+      setKindnessPosts(updated);
+      localStorage.setItem("pawbook-kindness-posts", JSON.stringify(updated));
 
-    setNewKindnessAuthor("");
-    setNewKindnessText("");
+      const nextPoints = kindnessPoints + 10;
+      setKindnessPoints(nextPoints);
+      localStorage.setItem("pawbook-kindness-points", nextPoints.toString());
 
-    toast.success("Kindness registered! You earned +10 Kindness Points! 🎉");
+      setNewKindnessAuthor("");
+      setNewKindnessText("");
+      setPlantingPost(null);
+
+      // Confetti burst
+      confetti({
+        particleCount: 50,
+        spread: 80,
+        colors: ["#7f5539", "#ddb892", "#ffccd5", "#b7b7a4", "#e6ccb2"],
+      });
+
+      toast.success("Kindness registered! You earned +10 Kindness Points! 🎉");
+    }, 3800);
   };
 
   useEffect(() => {
@@ -586,37 +1041,48 @@ function HomePage() {
 
   return (
     <PageShell>
+      <ScrollFlowDecor />
+      {flashActive && <div className="camera-flash animate-flash" />}
+
       {/* ==================== HOME SECTION ==================== */}
-      <div id="home" className="scroll-mt-24">
+      <motion.div
+        id="home"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="scroll-mt-24"
+      >
         {/* Instagram Stories Row */}
         <section className="mx-auto max-w-5xl px-4 pt-4">
           <InstagramStories />
         </section>
 
         {/* HERO */}
-        <header className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 pt-10 pb-16 lg:grid-cols-2 lg:gap-16 lg:pt-16 lg:pb-24">
-          <div
-            className="space-y-6 lg:space-y-8"
-            style={{ animation: "fade-up 0.9s var(--ease-soft) both" }}
+        <header className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-6 px-6 pt-4 pb-12 lg:grid-cols-2 lg:gap-16 lg:pt-16 lg:pb-24">
+          <motion.div
+            initial={{ opacity: 0, x: -60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="space-y-4 lg:space-y-8"
           >
-            <div className="inline-flex items-center gap-2 rounded-full bg-yellow px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] scrapbook-shadow">
+            <div className="inline-flex items-center gap-2 rounded-full bg-yellow px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.18em] scrapbook-shadow">
               🐾 Welcome to PawBook World
             </div>
-            <h1 className="font-display text-4xl leading-[1.05] text-balance sm:text-5xl md:text-6xl lg:text-7xl">
-              Every street friend has a
+            <h1 className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl leading-tight text-balance">
+              Every little friend has a
               <br />
               <span className="text-peach">story worth remembering 🐾</span>
             </h1>
-            <p className="max-w-md text-base leading-relaxed text-coffee/85 sm:text-lg">
-              Create memories, follow journeys, and celebrate the little paws that make our streets
-              feel like home.
+            <p className="max-w-md text-sm md:text-base leading-relaxed text-coffee/85 sm:text-lg">
+              Create memories, follow journeys, and celebrate the little paws and wings that make
+              our world feel like home.
             </p>
-            <div className="flex flex-row gap-3 pt-2 sm:gap-4">
+            <div className="flex flex-row gap-3 pt-1 sm:gap-4">
               <button
                 onClick={() =>
                   document.getElementById("paw-book")?.scrollIntoView({ behavior: "smooth" })
                 }
-                className="squish flex-1 sm:flex-initial rounded-2xl bg-coffee px-4 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-bold text-cream scrapbook-shadow cursor-pointer text-center"
+                className="squish flex-1 sm:flex-initial rounded-2xl bg-coffee px-4 py-2.5 sm:px-8 sm:py-3.5 text-xs sm:text-base font-bold text-cream scrapbook-shadow cursor-pointer text-center animate-bounce-slow"
               >
                 🐶 Meet Paw Friends
               </button>
@@ -624,55 +1090,70 @@ function HomePage() {
                 onClick={() =>
                   document.getElementById("found-friends")?.scrollIntoView({ behavior: "smooth" })
                 }
-                className="squish flex-1 sm:flex-initial rounded-2xl border-2 border-coffee/10 bg-white px-4 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-bold text-coffee cursor-pointer text-center hover:bg-cream/60"
+                className="squish flex-1 sm:flex-initial rounded-2xl border-2 border-coffee/10 bg-white px-4 py-2.5 sm:px-8 sm:py-3.5 text-xs sm:text-base font-bold text-coffee cursor-pointer text-center hover:bg-cream/60"
               >
                 ❤️ Share a Paw Moment
               </button>
             </div>
 
             {/* Scrapbook Community Statistics Sticky Notes */}
-            <div className="grid grid-cols-2 gap-3 pt-4 max-w-sm">
-              <div className="bg-[#fefae0] border border-coffee/10 p-3 rounded-2xl -rotate-2 scrapbook-shadow text-center">
-                <span className="text-2xl">🐾</span>
-                <p className="text-base font-bold text-coffee mt-1">{animals.length} Friends</p>
-                <p className="text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
+            <div className="flex overflow-x-auto gap-2.5 pt-2 pb-2 scrollbar-none snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:pb-0 sm:max-w-xl">
+              <div className="bg-[#fefae0] border border-coffee/10 p-2 md:p-3 rounded-2xl -rotate-2 scrapbook-shadow text-center w-[115px] sm:w-auto shrink-0 snap-center">
+                <span className="text-xl md:text-2xl">🐾</span>
+                <p className="text-sm md:text-base font-bold text-coffee mt-1">
+                  {animals.length} Friends
+                </p>
+                <p className="text-[8px] md:text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
                   Paw Friends Added
                 </p>
               </div>
-              <div className="bg-[#fcf3ef] border border-coffee/10 p-3 rounded-2xl rotate-[1.5deg] scrapbook-shadow text-center">
-                <span className="text-2xl">❤️</span>
-                <p className="text-base font-bold text-coffee mt-1">{memories.length} Saved</p>
-                <p className="text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
+              <div className="bg-[#fcf3ef] border border-coffee/10 p-2 md:p-3 rounded-2xl rotate-[1.5deg] scrapbook-shadow text-center w-[115px] sm:w-auto shrink-0 snap-center">
+                <span className="text-xl md:text-2xl">❤️</span>
+                <p className="text-sm md:text-base font-bold text-coffee mt-1">
+                  {memories.length} Saved
+                </p>
+                <p className="text-[8px] md:text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
                   Memories Saved
                 </p>
               </div>
-              <div className="bg-[#e8f0fe] border border-coffee/10 p-3 rounded-2xl rotate-1 scrapbook-shadow text-center">
-                <span className="text-2xl">🍲</span>
-                <p className="text-base font-bold text-coffee mt-1">420 Shared</p>
-                <p className="text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
+              <div className="bg-[#e8f0fe] border border-coffee/10 p-2 md:p-3 rounded-2xl rotate-1 scrapbook-shadow text-center w-[115px] sm:w-auto shrink-0 snap-center">
+                <span className="text-xl md:text-2xl">🍲</span>
+                <p className="text-sm md:text-base font-bold text-coffee mt-1">420 Shared</p>
+                <p className="text-[8px] md:text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
                   Meals Shared
                 </p>
               </div>
-              <div className="bg-[#e6f4ea] border border-coffee/10 p-3 rounded-2xl rotate-[-1.5deg] scrapbook-shadow text-center">
-                <span className="text-2xl">🏥</span>
-                <p className="text-base font-bold text-coffee mt-1">94 Care</p>
-                <p className="text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
+              <div className="bg-[#e6f4ea] border border-coffee/10 p-2 md:p-3 rounded-2xl rotate-[-1.5deg] scrapbook-shadow text-center w-[115px] sm:w-auto shrink-0 snap-center">
+                <span className="text-xl md:text-2xl">🏥</span>
+                <p className="text-sm md:text-base font-bold text-coffee mt-1">94 Care</p>
+                <p className="text-[8px] md:text-[9px] text-coffee/60 font-bold uppercase tracking-wider">
                   Care Moments
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Live showcase */}
-          <div className="relative flex h-[520px] items-center justify-center sm:h-[560px]">
-            <div className="pointer-events-none absolute inset-0">
+          <div className="relative flex h-[480px] md:h-[560px] items-center justify-center">
+            <div className="pointer-events-none absolute inset-0 hidden md:block">
               {others.map((a, i) => {
                 const pos = orbitClasses[i % orbitClasses.length];
                 return (
-                  <button
+                  <motion.button
                     key={a.slug}
-                    onClick={() => setFeaturedSlug(a.slug)}
-                    className={`pointer-events-auto group absolute ${pos.size} animate-floaty overflow-hidden rounded-full border-4 border-white bg-${a.color} scrapbook-shadow cursor-pointer transition-all duration-300 hover:scale-105 hover:rotate-3 hover:paused`}
+                    onClick={() => {
+                      setFeaturedSlug(a.slug);
+                      setIsFlipped(false);
+                    }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 85,
+                      damping: 12,
+                      delay: 0.8 + i * 0.15,
+                    }}
+                    className="pointer-events-auto group absolute w-16 h-16 md:w-20 md:h-20 animate-floaty overflow-hidden rounded-full border-4 border-white bg-white scrapbook-shadow cursor-pointer transition-all duration-300 hover:scale-115 hover:paused"
                     style={{
                       top: pos.top,
                       left: pos.left,
@@ -686,196 +1167,210 @@ function HomePage() {
                     <span className="absolute inset-x-0 bottom-1 mx-auto w-fit rounded bg-white/95 px-2 py-0.5 text-[10px] font-bold opacity-0 transition-opacity group-hover:opacity-100">
                       {a.name}
                     </span>
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
 
+            {/* Sway wrapper is separate from perspective so CSS animation transform
+                doesn't override the 3D rotateY flip transform on the same element */}
             <div
-              key={featured.slug}
-              className="relative z-10 w-full max-w-sm h-[560px] perspective-1000 animate-sway"
-              style={{
-                animation: "sway 6s ease-in-out infinite, fade-up 0.6s var(--ease-soft) both",
-              }}
+              className="relative z-10 w-full max-w-sm h-[470px] md:h-[560px]"
+              style={{ animation: "sway 6s ease-in-out infinite" }}
             >
-              <div
-                onClick={() => {
-                  setIsFlipped(!isFlipped);
-                  playRustle();
-                }}
-                className={`w-full h-full transform-style-3d transition-all duration-500 ease-soft relative cursor-pointer hover:-translate-y-1 ${
-                  isFlipped ? "rotate-y-180" : ""
-                }`}
+              <motion.div
+                key={featured.slug}
+                initial={{ opacity: 0, y: 100, rotate: 6 }}
+                animate={{ opacity: 1, y: 0, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 60, damping: 14, delay: 0.4 }}
+                className="w-full h-full perspective-1000"
               >
-                {/* FRONT SIDE */}
-                <div className="absolute inset-0 w-full h-full backface-hidden">
-                  <div className="relative -rotate-2 border border-coffee/5 bg-white p-4 pb-7 scrapbook-shadow h-full flex flex-col justify-between">
-                    <div className="washi-tape absolute -top-3 left-1/2 z-20 h-8 w-24 -translate-x-1/2 rotate-2" />
+                <div
+                  onClick={() => setIsFlipped(!isFlipped)}
+                  className="w-full h-full transform-style-3d transition-all duration-500 ease-soft relative cursor-pointer hover:-translate-y-1"
+                  style={{
+                    transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                  }}
+                >
+                  {/* FRONT SIDE */}
+                  <div
+                    className="absolute inset-0 w-full h-full backface-hidden"
+                    style={{ pointerEvents: isFlipped ? "none" : "auto" }}
+                  >
+                    <div className="relative -rotate-2 border border-coffee/5 bg-white p-3.5 pb-5 md:p-4 md:pb-7 scrapbook-shadow h-full flex flex-col justify-between backface-hidden">
+                      <div className="washi-tape absolute -top-3 left-1/2 z-20 h-8 w-24 -translate-x-1/2 rotate-2" />
 
-                    {/* Polaroid Picture */}
-                    <div className="relative aspect-square overflow-hidden rounded-sm bg-cream shrink-0">
-                      <PetPhoto slug={featured.slug} image={featured.image} />
-                      <div className="absolute right-3 bottom-3 flex flex-wrap justify-end gap-2">
-                        {featured.badges.slice(0, 2).map((b) => (
-                          <span
-                            key={b}
-                            className="rounded-full bg-yellow/90 px-3 py-1 text-[10px] font-bold shadow-sm"
-                          >
-                            {b}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Text Details */}
-                    <div className="mt-3 flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-end justify-between gap-2">
-                          <div className="min-w-0">
-                            <h3 className="font-display text-2xl">
-                              {featured.name} {featured.emoji}
-                            </h3>
-                            <p className="font-hand text-lg text-peach">"{featured.nickname}"</p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/40">
-                              Status
-                            </p>
-                            <p className="flex items-center justify-end gap-1 font-bold text-sage">
-                              ●{" "}
-                              {featured.status === "safe"
-                                ? "Safe"
-                                : featured.status === "needs-care"
-                                  ? "Needs care"
-                                  : "Emergency"}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="rounded-lg bg-cream/60 p-2.5 text-xs italic leading-relaxed text-coffee/70 mt-2">
-                          "{featured.story}"
-                        </p>
-                      </div>
-
-                      <div className="space-y-3 pt-2">
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { v: featured.stats.pawPrints, l: "Paw Prints" },
-                            { v: featured.stats.treats, l: "Treats" },
-                            { v: featured.stats.memories, l: "Memories" },
-                          ].map((s) => (
-                            <div key={s.l} className="rounded bg-cream p-1.5 text-center">
-                              <p className="text-sm font-bold">{s.v}</p>
-                              <p className="text-[8px] uppercase tracking-tight text-coffee/60">
-                                {s.l}
-                              </p>
-                            </div>
+                      {/* Polaroid Picture */}
+                      <div className="relative aspect-4/3 md:aspect-square overflow-hidden rounded-sm bg-cream shrink-0">
+                        <PetPhoto slug={featured.slug} image={featured.image} />
+                        <div className="absolute right-3 bottom-3 flex flex-wrap justify-end gap-2">
+                          {(featured.badges || []).slice(0, 2).map((b) => (
+                            <span
+                              key={b}
+                              className="rounded-full bg-yellow/90 px-3 py-1 text-[10px] font-bold shadow-sm"
+                            >
+                              {b}
+                            </span>
                           ))}
                         </div>
-
-                        <div className="text-center text-[10px] font-bold text-coffee/40 animate-pulse">
-                          🖱️ Tap card to reveal secret facts! ✨
-                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* BACK SIDE */}
-                <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180">
-                  <div className="relative rotate-2 border-2 border-coffee/10 bg-cream/95 p-5 pb-7 scrapbook-shadow h-full flex flex-col justify-between text-left">
-                    <div className="washi-tape absolute -top-3 left-1/2 z-20 h-8 w-24 -translate-x-1/2 rotate-1" />
-
-                    <div>
-                      <div className="flex items-center justify-between border-b border-coffee/10 pb-3">
+                      {/* Text Details */}
+                      <div className="mt-3 flex-1 flex flex-col justify-between">
                         <div>
-                          <h3 className="font-display text-2xl text-coffee">
-                            {featured.name}'s Secrets 🤫
-                          </h3>
-                          <p className="text-[10px] text-coffee/40 font-bold uppercase tracking-wider">
-                            Creator Files
+                          <div className="flex items-end justify-between gap-2">
+                            <div className="min-w-0">
+                              <h3 className="font-display text-2xl">
+                                {featured.name} {featured.emoji}
+                              </h3>
+                              <p className="font-hand text-lg text-peach">"{featured.nickname}"</p>
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/40">
+                                Status
+                              </p>
+                              <p className="flex items-center justify-end gap-1 font-bold text-sage">
+                                ●{" "}
+                                {featured.status === "safe"
+                                  ? "Safe"
+                                  : featured.status === "needs-care"
+                                    ? "Needs care"
+                                    : "Emergency"}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="rounded-lg bg-cream/60 p-2.5 text-xs italic leading-relaxed text-coffee/70 mt-2">
+                            "{featured.story}"
                           </p>
                         </div>
-                        <span className="text-3xl">{featured.emoji}</span>
-                      </div>
 
-                      <div className="mt-4 space-y-3.5 text-xs">
-                        <div className="flex justify-between items-baseline border-b border-coffee/5 pb-1">
-                          <span className="font-bold text-coffee/50 uppercase text-[9px] tracking-wider">
-                            Official Title
-                          </span>
-                          <span className="font-bold text-coffee">{featured.nickname}</span>
-                        </div>
-                        <span className="block border-b border-coffee/5 pb-1">
-                          <span className="font-bold text-coffee/50 uppercase text-[9px] tracking-wider block mb-0.5">
-                            Secret Weakness / Habit
-                          </span>
-                          <span className="font-medium text-coffee italic">
-                            "Acts hungry even after eating a full meal" 🍪
-                          </span>
-                        </span>
-                        <div className="flex justify-between items-baseline border-b border-coffee/5 pb-1">
-                          <span className="font-bold text-coffee/50 uppercase text-[9px] tracking-wider">
-                            Favorite Snack
-                          </span>
-                          <span className="font-bold text-coffee">
-                            {featured.favoriteFood || "Parle-G Biscuits"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-baseline border-b border-coffee/5 pb-1">
-                          <span className="font-bold text-coffee/50 uppercase text-[9px] tracking-wider">
-                            First Met Date
-                          </span>
-                          <span className="font-bold text-coffee">
-                            {featured.firstMet || "12 Jan 2025"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-baseline border-b border-coffee/5 pb-1">
-                          <span className="font-bold text-coffee/50 uppercase text-[9px] tracking-wider">
-                            Primary Basecamp
-                          </span>
-                          <span className="font-bold text-coffee">{featured.home}</span>
-                        </div>
-                        <div className="flex justify-between items-baseline border-b border-coffee/5 pb-1">
-                          <span className="font-bold text-coffee/50 uppercase text-[9px] tracking-wider">
-                            Personality Tag
-                          </span>
-                          <span className="font-bold text-peach">{featured.personality}</span>
+                        <div className="space-y-3 pt-2">
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { v: featured.stats.pawPrints, l: "Paw Prints" },
+                              { v: featured.stats.treats, l: "Treats" },
+                              { v: featured.stats.memories, l: "Memories" },
+                            ].map((s) => (
+                              <div key={s.l} className="rounded bg-cream p-1.5 text-center">
+                                <p className="text-sm font-bold">{s.v}</p>
+                                <p className="text-[8px] uppercase tracking-tight text-coffee/60">
+                                  {s.l}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="text-center text-[10px] font-bold text-coffee/40 animate-pulse">
+                            🖱️ Tap card to reveal secret facts! ✨
+                          </div>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="space-y-4">
-                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={(e) => handleAction("feat-love", "Boop", featured.name, e)}
-                          className="squish flex-1 rounded-xl bg-peach py-2 text-xs font-bold text-coffee scrapbook-shadow cursor-pointer"
-                        >
-                          ❤️ Boop Nose
-                        </button>
-                        <button
-                          onClick={(e) => handleAction("feat-treat", "Treat", featured.name, e)}
-                          className="squish flex-1 rounded-xl bg-sage py-2 text-xs font-bold text-coffee scrapbook-shadow cursor-pointer"
-                        >
-                          🍪 Give Cookie
-                        </button>
+                  {/* BACK SIDE */}
+                  <div
+                    className="absolute inset-0 w-full h-full backface-hidden"
+                    style={{
+                      transform: "rotateY(180deg)",
+                      pointerEvents: isFlipped ? "auto" : "none",
+                    }}
+                  >
+                    <div className="relative rotate-2 border border-coffee/10 bg-cream/95 p-3.5 pb-5 md:p-5 md:pb-7 scrapbook-shadow h-full flex flex-col justify-between text-left backface-hidden">
+                      <div className="washi-tape absolute -top-3 left-1/2 z-20 h-8 w-24 -translate-x-1/2 rotate-1" />
+
+                      <div>
+                        <div className="flex items-center justify-between border-b border-coffee/10 pb-2 md:pb-3">
+                          <div>
+                            <h3 className="font-display text-xl md:text-2xl text-coffee">
+                              {featured.name}'s Secrets 🤫
+                            </h3>
+                            <p className="text-[9px] md:text-[10px] text-coffee/40 font-bold uppercase tracking-wider">
+                              Creator Files
+                            </p>
+                          </div>
+                          <span className="text-2xl md:text-3xl">{featured.emoji}</span>
+                        </div>
+
+                        <div className="mt-2.5 md:mt-4 space-y-2 md:space-y-3.5 text-[11px] md:text-xs">
+                          <div className="flex justify-between items-baseline border-b border-coffee/5 pb-0.5 md:pb-1">
+                            <span className="font-bold text-coffee/50 uppercase text-[8px] md:text-[9px] tracking-wider">
+                              Official Title
+                            </span>
+                            <span className="font-bold text-coffee">{featured.nickname}</span>
+                          </div>
+                          <span className="block border-b border-coffee/5 pb-1">
+                            <span className="font-bold text-coffee/50 uppercase text-[9px] tracking-wider block mb-0.5">
+                              Secret Weakness / Habit
+                            </span>
+                            <span className="font-medium text-coffee italic">
+                              "Acts hungry even after eating a full meal" 🍪
+                            </span>
+                          </span>
+                          <div className="flex justify-between items-baseline border-b border-coffee/5 pb-0.5 md:pb-1">
+                            <span className="font-bold text-coffee/50 uppercase text-[8px] md:text-[9px] tracking-wider">
+                              Favorite Snack
+                            </span>
+                            <span className="font-bold text-coffee">
+                              {featured.favoriteFood || "Parle-G Biscuits"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-baseline border-b border-coffee/5 pb-0.5 md:pb-1">
+                            <span className="font-bold text-coffee/50 uppercase text-[8px] md:text-[9px] tracking-wider">
+                              First Met Date
+                            </span>
+                            <span className="font-bold text-coffee">
+                              {featured.firstMet || "12 Jan 2025"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-baseline border-b border-coffee/5 pb-0.5 md:pb-1">
+                            <span className="font-bold text-coffee/50 uppercase text-[8px] md:text-[9px] tracking-wider">
+                              Primary Basecamp
+                            </span>
+                            <span className="font-bold text-coffee">{featured.home}</span>
+                          </div>
+                          <div className="flex justify-between items-baseline border-b border-coffee/5 pb-0.5 md:pb-1">
+                            <span className="font-bold text-coffee/50 uppercase text-[8px] md:text-[9px] tracking-wider">
+                              Personality Tag
+                            </span>
+                            <span className="font-bold text-peach">{featured.personality}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <Link
-                        to="/paw-friends/$slug"
-                        params={{ slug: featured.slug }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="block rounded-xl bg-coffee py-2.5 text-center text-xs font-bold text-cream transition hover:opacity-90"
-                      >
-                        Explore Full Pet Diary & Timeline →
-                      </Link>
+                      <div className="space-y-2.5 md:space-y-4">
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => handleAction("feat-love", "Boop", featured.name, e)}
+                            className="squish flex-1 rounded-xl bg-peach py-1.5 md:py-2 text-[11px] md:text-xs font-bold text-coffee scrapbook-shadow cursor-pointer"
+                          >
+                            ❤️ Boop Nose
+                          </button>
+                          <button
+                            onClick={(e) => handleAction("feat-treat", "Treat", featured.name, e)}
+                            className="squish flex-1 rounded-xl bg-sage py-2 text-xs font-bold text-coffee scrapbook-shadow cursor-pointer"
+                          >
+                            🍪 Give Cookie
+                          </button>
+                        </div>
 
-                      <div className="text-center text-[9px] font-bold text-coffee/30">
-                        🖱️ Click card to return profile
+                        <Link
+                          to="/paw-friends/$slug"
+                          params={{ slug: featured.slug }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="block rounded-xl bg-coffee py-2.5 text-center text-xs font-bold text-cream transition hover:opacity-90"
+                        >
+                          Explore Full Pet Diary & Timeline →
+                        </Link>
+
+                        <div className="text-center text-[9px] font-bold text-coffee/30">
+                          🖱️ Click card to return profile
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </header>
@@ -913,7 +1408,7 @@ function HomePage() {
                       </span>
                     </p>
                     <p className="text-[11px] text-coffee/85 italic">
-                      "{a.dailyThought.slice(0, 45)}..."
+                      "{(a.dailyThought || a.story || "").slice(0, 45)}..."
                     </p>
                   </div>
                 </div>
@@ -1038,7 +1533,7 @@ function HomePage() {
                   Find Your Paw Best Friend
                 </h3>
                 <p className="text-xs text-coffee/70 max-w-xs mx-auto leading-relaxed">
-                  Take our viral 5-question personality matching game to find out which street
+                  Take our viral 5-question personality matching game to find out which beloved
                   friend shares your soul energy!
                 </p>
                 <div className="mt-6 space-y-2 bg-cream/30 p-4 rounded-2xl border border-coffee/5 text-left max-w-xs mx-auto">
@@ -1087,12 +1582,17 @@ function HomePage() {
             </p>
           </div>
         </section>
-      </div>
+      </motion.div>
 
       {/* ==================== PAWBOOK SECTION ==================== */}
-      <section
+      <FriendCardStyle />
+      <motion.section
         id="paw-book"
-        className="mx-auto max-w-7xl px-6 pt-20 pb-16 scroll-mt-24 border-b border-coffee/5"
+        initial={{ opacity: 0, y: 80, rotateX: 6 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: true, margin: "-10% 0px" }}
+        transition={{ type: "spring", stiffness: 45, damping: 14 }}
+        className="mx-auto max-w-7xl px-6 pt-20 pb-16 scroll-mt-24 border border-coffee/5 bg-[#fffdf9] rounded-[2.5rem] scrapbook-shadow-lg p-6 sm:p-10 mb-16 relative overflow-hidden paper"
       >
         <div className="mb-2 text-sm font-bold uppercase tracking-widest text-coffee/50">
           🐾 The Village
@@ -1107,180 +1607,41 @@ function HomePage() {
 
         <div
           ref={villageRef}
-          className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-10 flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:overflow-x-visible sm:pb-0"
         >
           {animals.map((a, i) => {
             const isFlipped = !!flippedSlugs[a.slug];
-            const randomTilt = (i % 3) * 2.4 - 2.4; // random rotation degree for scrapbook feel
-
             return (
-              <div
-                key={a.slug}
-                onClick={(e) => toggleFlip(a.slug, e)}
-                style={
-                  {
-                    "--random-rotate": `${randomTilt}deg`,
-                    transitionDelay: `${i * 120}ms`,
-                  } as React.CSSProperties
-                }
-                className={`polaroid-card ${villageInView ? "landed" : ""} relative w-full h-[390px] perspective-1000 cursor-pointer select-none group transition-transform duration-300 hover:scale-104 hover:-translate-y-2`}
-              >
-                <div
-                  className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
-                    isFlipped ? "rotate-y-180" : ""
-                  }`}
-                >
-                  {/* FRONT SIDE */}
-                  <div className="absolute inset-0 w-full h-full backface-hidden rounded-3xl border border-coffee/10 bg-white p-3 pb-5 flex flex-col justify-between scrapbook-shadow z-10">
-                    {/* Washi tape */}
-                    <div className="absolute -top-3.5 left-1/2 z-20 h-6 w-16 -translate-x-1/2 bg-yellow/40 border border-dashed border-yellow/20 opacity-75 shadow-xs" />
-
-                    {/* Pet Image */}
-                    <div className="relative w-full aspect-square overflow-hidden rounded-2xl bg-cream border border-coffee/5">
-                      {/* Heart hover sticker */}
-                      <div className="absolute top-2.5 right-2.5 rounded-full bg-peach/95 p-1.5 text-xs shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100 z-30 select-none">
-                        ❤️
-                      </div>
-                      <PetPhoto
-                        slug={a.slug}
-                        image={a.image}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute top-2.5 left-2.5 rounded-full bg-white/95 px-2.5 py-0.5 text-[9px] font-bold shadow-xs">
-                        {a.mood}
-                      </div>
-                    </div>
-
-                    {/* Pet Text Info */}
-                    <div className="mt-2.5 space-y-1 px-1 flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-display text-lg text-coffee font-bold">
-                            {a.name} {a.emoji}
-                          </h3>
-                          <span
-                            className={
-                              "text-[10px] font-bold flex items-center gap-1 " +
-                              (a.status === "safe"
-                                ? "text-sage"
-                                : a.status === "needs-care"
-                                  ? "text-yellow-700"
-                                  : "text-destructive")
-                            }
-                          >
-                            <span className="text-xs">●</span>
-                            {a.status === "safe"
-                              ? "Safe 💚"
-                              : a.status === "needs-care"
-                                ? "Needs Care 🏥"
-                                : "Emergency 🚨"}
-                          </span>
-                        </div>
-                        <p className="font-hand text-base text-peach mt-0.5">"{a.nickname}"</p>
-                      </div>
-
-                      <div className="border-t border-coffee/5 pt-2 text-[10px] space-y-0.5 text-coffee/70">
-                        <p>
-                          📍 <span className="font-semibold">Home:</span> {a.home}
-                        </p>
-                        <p>
-                          👀 <span className="font-semibold">Last Seen:</span> {a.lastSeenLocation}
-                        </p>
-                        <p>
-                          ⏰ <span className="font-semibold">Updated:</span> {a.lastUpdated}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* BACK SIDE */}
-                  <div className="absolute inset-0 w-full h-full rotate-y-180 backface-hidden rounded-3xl border border-coffee/10 bg-white p-4 pb-5 flex flex-col justify-between scrapbook-shadow bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px]">
-                    {/* Washi tape */}
-                    <div className="absolute -top-3.5 left-1/2 z-20 h-6 w-16 -translate-x-1/2 bg-peach/40 border border-dashed border-peach/20 opacity-75 shadow-xs" />
-
-                    <div className="space-y-3.5 flex-1">
-                      <div className="text-center border-b border-coffee/5 pb-2">
-                        <h4 className="font-display text-base font-bold text-coffee">
-                          {a.name}'s Love
-                        </h4>
-                        <p className="text-[10px] text-coffee/50">Community Care Card</p>
-                      </div>
-
-                      {/* Community Love metrics */}
-                      <div className="grid grid-cols-3 gap-1 bg-[#FDFBF7] p-2.5 rounded-2xl border border-coffee/5 text-center">
-                        <div>
-                          <p className="text-[11px] font-bold text-coffee">
-                            {a.communityLove?.followers || 0}
-                          </p>
-                          <p className="text-[8px] text-coffee/50 uppercase font-bold tracking-wider">
-                            Love
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-coffee">
-                            {a.communityLove?.memories || 0}
-                          </p>
-                          <p className="text-[8px] text-coffee/50 uppercase font-bold tracking-wider">
-                            Memories
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[11px] font-bold text-coffee">
-                            {a.communityLove?.helpers || 0}
-                          </p>
-                          <p className="text-[8px] text-coffee/50 uppercase font-bold tracking-wider">
-                            Helpers
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Info details */}
-                      <div className="text-[11px] space-y-1 text-left">
-                        <p>
-                          <span className="font-bold text-coffee/70">🧬 Breed:</span>{" "}
-                          <span className="text-coffee/85 font-medium">{a.breedType}</span>
-                        </p>
-                        <p>
-                          <span className="font-bold text-coffee/70">🍪 Fav Snack:</span>{" "}
-                          <span className="text-coffee/85 font-medium">
-                            {a.favoriteFood.slice(0, 35)}
-                          </span>
-                        </p>
-                      </div>
-
-                      {/* Badges list */}
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {a.badges.slice(0, 3).map((badge, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-peach/10 border border-peach/25 text-[8px] font-bold text-coffee px-2 py-0.5 rounded-full"
-                          >
-                            {badge}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <Link
-                      to="/paw-friends/$slug"
-                      params={{ slug: a.slug }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="squish block w-full rounded-2xl bg-coffee text-cream text-center py-2.5 text-xs font-bold scrapbook-shadow transition hover:opacity-90 mt-2"
-                    >
-                      Open Passport & Stories 📖 →
-                    </Link>
-                  </div>
-                </div>
+              <div key={a.slug} className="w-[85vw] sm:w-auto shrink-0 snap-center">
+                <FriendCard
+                  a={a}
+                  isFlipped={isFlipped}
+                  toggleFlip={(e) => toggleFlip(a.slug, e)}
+                  i={i}
+                />
               </div>
             );
           })}
         </div>
-      </section>
+
+        {/* Swipe indicator (mobile only) */}
+        {animals.length > 1 && (
+          <div className="flex flex-col items-center gap-1 mt-4 sm:hidden">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-coffee/30 animate-pulse">
+              Swipe left / right to see all friends 🐾
+            </p>
+          </div>
+        )}
+      </motion.section>
 
       {/* ==================== STORIES SECTION ==================== */}
-      <section
+      <motion.section
         id="stories"
-        className="mx-auto max-w-4xl px-6 pt-20 pb-16 scroll-mt-24 border-b border-coffee/5"
+        initial={{ opacity: 0, y: 80, rotateX: 6 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: true, margin: "-10% 0px" }}
+        transition={{ type: "spring", stiffness: 45, damping: 14 }}
+        className="mx-auto max-w-4xl px-6 pt-20 pb-16 scroll-mt-24 border border-coffee/5 bg-[#fffdf9] rounded-[2.5rem] scrapbook-shadow-lg p-6 sm:p-10 mb-16 relative overflow-hidden paper"
       >
         <div className="mb-2 text-sm font-bold uppercase tracking-widest text-coffee/50 text-center">
           📖 Paw Feed
@@ -1444,38 +1805,15 @@ function HomePage() {
                     </header>
 
                     {/* Magic Letter Envelope Reveal */}
-                    {!envelopeOpen[m.id] ? (
-                      <div
-                        onClick={() => {
-                          setEnvelopeOpen((prev) => ({ ...prev, [m.id]: true }));
-                          playPageFlip();
-                        }}
-                        className="mb-4 cursor-pointer rounded-2xl border border-dashed border-peach/50 bg-[#FDFBF7] p-5 text-center flex flex-col items-center justify-center gap-2 hover:bg-[#FAF4ED] hover:scale-102 active:scale-98 transition-all shadow-xs"
-                      >
-                        <span className="text-4xl animate-float">💌</span>
-                        <p className="font-display text-sm font-bold text-coffee">
-                          Open {a.name}&apos;s Memory Letter
-                        </p>
-                        <p className="text-[10px] text-coffee/40 font-bold uppercase">
-                          Tap to open letter
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="animate-fade-in relative">
-                        {/* Lined Notebook Paper Story */}
-                        <div className="mb-2 bg-[radial-gradient(circle_at_0px_0px,transparent_8px,transparent_8px),linear-gradient(#00000008_1px,transparent_1px)] bg-size-[100%_24px] pl-1 py-1">
-                          <p className="font-hand text-xl leading-relaxed text-coffee/85">
-                            "{m.story}"
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => setEnvelopeOpen((prev) => ({ ...prev, [m.id]: false }))}
-                          className="text-[9px] font-bold uppercase tracking-wider text-[#A06040] hover:text-peach cursor-pointer mb-2"
-                        >
-                          Close Letter ✕
-                        </button>
-                      </div>
-                    )}
+                    <MagicLetter
+                      name={a.name}
+                      story={m.story}
+                      isOpen={!!envelopeOpen[m.id]}
+                      onToggle={() => {
+                        setEnvelopeOpen((prev) => ({ ...prev, [m.id]: !prev[m.id] }));
+                        playPageFlip();
+                      }}
+                    />
                   </div>
 
                   {/* Actions & Comment list */}
@@ -1559,291 +1897,20 @@ function HomePage() {
             </div>
           );
         })()}
-      </section>
-
-      {/* ==================== KINDNESS WALL SECTION ==================== */}
-      <section
-        id="garden"
-        className="mx-auto max-w-5xl px-6 pt-20 pb-16 scroll-mt-24 border-b border-coffee/5"
-      >
-        <div className="text-center">
-          <div className="mb-2 text-sm font-bold uppercase tracking-widest text-coffee/50">
-            ❤️ Kindness Wall
-          </div>
-          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl">
-            Every act of <span className="text-peach">kindness</span> matters
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-lg text-coffee/70">
-            A space where we record feedings, medical support, and small helps. Post your act to
-            earn points and inspire others!
-          </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-8 sm:mt-10">
-          <StatCard icon="❤️" label="Love Received" value={totalLove} tone="peach" />
-          <StatCard
-            icon="🍲"
-            label="Feedings Logged"
-            value={kindnessPosts.filter((p) => p.badge.includes("🍲")).length + totalTreats}
-            tone="yellow"
-          />
-          <StatCard icon="✨" label="Kindness Points" value={kindnessPoints} tone="sage" />
-        </div>
-
-        {/* Lined paper Kindness Tree Growth Indicator */}
-        <div className="relative mt-10 overflow-hidden rounded-3xl border-2 border-dashed border-sage/50 bg-[#F5F8F5] p-6 sm:p-8 text-center scrapbook-shadow">
-          <div className="absolute top-4 right-6 text-4xl animate-float">🦋</div>
-          <div
-            className="absolute bottom-4 left-6 text-3xl animate-float"
-            style={{ animationDelay: "1s" }}
-          >
-            🐾
-          </div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/60">
-            🌳 The Growing Kindness Tree
-          </p>
-          <h3 className="mt-2 font-display text-3xl sm:text-4xl">{growth.label}</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-coffee/70">{growth.desc}</p>
-
-          {/* Interactive SVG Tree Canvas */}
-          <div className="relative mx-auto mt-8 w-full max-w-[400px] h-[220px] bg-white border border-coffee/10 rounded-2xl p-4 flex items-center justify-center scrapbook-shadow overflow-hidden">
-            <svg
-              className="absolute inset-0 w-full h-full"
-              viewBox="0 0 200 120"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Ground line */}
-              <line
-                x1="20"
-                y1="110"
-                x2="180"
-                y2="110"
-                stroke="#7f5539"
-                strokeWidth="2"
-                strokeDasharray="3 3"
-              />
-              {/* Trunk & Main Branches */}
-              <path
-                d="M100,110 C100,80 90,60 80,45 M100,110 C100,80 110,60 120,40 M100,110 L100,60 C100,50 95,35 90,25 M100,60 C100,50 105,35 110,25"
-                stroke="#7f5539"
-                strokeWidth="4"
-                strokeLinecap="round"
-                className="map-trace-path"
-              />
-            </svg>
-
-            {/* Dynamic Leaves attached to tree branch coordinates */}
-            {(() => {
-              // Defined coordinates on branches
-              const leafCoordinates = [
-                { top: "30%", left: "42%" }, // center-left branch
-                { top: "25%", left: "54%" }, // center-right branch
-                { top: "45%", left: "32%" }, // low-left branch
-                { top: "40%", left: "64%" }, // low-right branch
-                { top: "18%", left: "46%" }, // high-center-left
-                { top: "18%", left: "50%" }, // high-center-right
-                { top: "52%", left: "36%" }, // bottom-left
-                { top: "48%", left: "60%" }, // bottom-right
-                { top: "32%", left: "36%" },
-                { top: "30%", left: "58%" },
-              ];
-
-              return (
-                <div className="absolute inset-0 pointer-events-none">
-                  {kindnessPosts.slice(0, leafCoordinates.length).map((post, idx) => {
-                    const coords = leafCoordinates[idx];
-                    const leafIcon = post.badge.includes("🍲")
-                      ? "🍲"
-                      : post.badge.includes("🏥")
-                        ? "🏥"
-                        : post.badge.includes("📖")
-                          ? "📖"
-                          : "🐾";
-
-                    return (
-                      <button
-                        key={post.id}
-                        onClick={() => {
-                          toast.info(`🍃 ${post.author} logged: "${post.text}"`);
-                          playPageFlip();
-                        }}
-                        style={{ top: coords.top, left: coords.left }}
-                        className="pointer-events-auto absolute flex items-center justify-center w-8 h-8 rounded-full bg-sage/20 border border-sage text-sm shadow-xs hover:scale-125 hover:bg-sage/40 transition-all cursor-pointer leaf-appear"
-                        title={`${post.author}: ${post.text}`}
-                      >
-                        {leafIcon}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
-
-          <div className="text-[10px] text-coffee/40 font-bold uppercase mt-4">
-            *Every kindness logged grows a new leaf on our tree 🍃
-          </div>
-        </div>
-
-        {/* Kindness Wall Logger and Feed Container */}
-        <div className="mt-12 grid gap-8 md:grid-cols-5 items-start text-left">
-          {/* Logger Form */}
-          <div className="md:col-span-2 rounded-3xl border border-coffee/10 bg-white p-5 scrapbook-shadow">
-            <h4 className="font-display text-lg font-bold text-coffee flex items-center gap-1.5">
-              <span>✍️ Log Care Act</span>
-            </h4>
-            <p className="text-[11px] text-coffee/60 mb-4">
-              Did you feed or help an animal today? Share it to grow our wall!
-            </p>
-
-            <form onSubmit={handleSubmitKindness} className="space-y-3.5">
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-coffee/60">
-                  Your Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  maxLength={50}
-                  placeholder="e.g. Sejal"
-                  value={newKindnessAuthor}
-                  onChange={(e) => setNewKindnessAuthor(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-coffee/10 bg-cream/20 px-3 py-1.5 text-xs focus:outline-none focus:border-peach font-normal"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-coffee/60">
-                  What did you do?
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  maxLength={250}
-                  placeholder="e.g. Shared biscuits with Bruno near College Gate today."
-                  value={newKindnessText}
-                  onChange={(e) => setNewKindnessText(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-coffee/10 bg-cream/20 px-3 py-1.5 text-xs focus:outline-none focus:border-peach resize-none font-normal"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-coffee/60">
-                  Assistance Badge
-                </label>
-                <select
-                  value={newKindnessBadge}
-                  onChange={(e) => setNewKindnessBadge(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-coffee/10 bg-cream/20 px-3 py-1.5 text-xs focus:outline-none focus:border-peach font-normal"
-                >
-                  <option>Food Friend 🍲</option>
-                  <option>Care Hero 🏥</option>
-                  <option>Memory Keeper 📖</option>
-                  <option>Paw Guardian 🐾</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="squish w-full py-2.5 rounded-full bg-coffee hover:bg-coffee/90 text-cream text-xs font-bold font-display shadow-xs flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <span>Log Act</span>
-                <span className="text-[10px] bg-peach/20 text-peach px-2 py-0.5 rounded-full font-mono font-bold">
-                  +10 Pts 🎉
-                </span>
-              </button>
-            </form>
-          </div>
-
-          {/* Scrolling Feed */}
-          <div className="md:col-span-3 space-y-4">
-            <h4 className="font-display text-lg font-bold text-coffee flex items-center justify-between">
-              <span>❤️ Kindness Log Feed</span>
-              <span className="text-[10px] bg-sage/20 text-coffee/70 px-2.5 py-0.5 rounded-full font-mono">
-                {kindnessPosts.length} Logs
-              </span>
-            </h4>
-
-            <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-2 scrollbar-thin">
-              {kindnessPosts.length === 0 ? (
-                <p className="text-xs text-coffee/50 text-center py-10 bg-cream/10 rounded-2xl border border-dashed border-coffee/10">
-                  No logs posted yet. Be the first!
-                </p>
-              ) : (
-                kindnessPosts.map((p) => {
-                  const colors = [
-                    "bg-[#FFFDF6] border-peach/20",
-                    "bg-[#F7FCF6] border-sage/20",
-                    "bg-[#F5FAFC] border-sky/20",
-                  ];
-                  const selectedBg = colors[p.id.length % colors.length];
-                  return (
-                    <div
-                      key={p.id}
-                      className={`p-4 rounded-2xl border scrapbook-shadow transition-transform hover:-translate-y-0.5 duration-200 relative ${selectedBg}`}
-                    >
-                      <div className="absolute top-3.5 right-3.5 text-[10px] bg-coffee/5 text-coffee/65 px-2 py-0.5 rounded-full font-bold font-display">
-                        {p.badge}
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm text-coffee">{p.author}</span>
-                        <span className="text-red-500 text-xs">❤️</span>
-                      </div>
-
-                      <p className="text-coffee/85 mt-1.5 leading-relaxed font-hand text-base">
-                        "{p.text}"
-                      </p>
-
-                      <div className="flex justify-between items-center mt-3 pt-2 border-t border-coffee/5">
-                        <span className="text-[9px] text-coffee/40 font-mono">{p.date}</span>
-                        <span className="text-[9px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded-sm">
-                          +{p.points} Pts
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Gardeners list */}
-        <div className="mt-16">
-          <SectionHeading eyebrow="The gardeners" title="Friends who grew this meadow" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {animals.map((a) => (
-              <Link
-                key={a.slug}
-                to="/paw-friends/$slug"
-                params={{ slug: a.slug }}
-                className="flex items-center gap-3 rounded-2xl border border-coffee/10 bg-white p-3 scrapbook-shadow transition-transform hover:-translate-y-1"
-              >
-                <img src={a.image} alt="" className="size-14 rounded-full object-cover" />
-                <div className="min-w-0">
-                  <p className="truncate font-bold text-left">
-                    {a.name} {a.emoji}
-                  </p>
-                  <p className="text-xs text-coffee/60 text-left">
-                    {a.stats.memories} memories · {a.stats.pawPrints} love
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      </motion.section>
 
       {/* ==================== FOUND A FRIEND SECTION ==================== */}
-      <section
+      <motion.section
         id="found-friends"
-        className="mx-auto max-w-6xl px-6 pt-20 pb-16 scroll-mt-24 border-b border-coffee/5"
+        initial={{ opacity: 0, y: 80, rotateX: 6 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: true, margin: "-10% 0px" }}
+        transition={{ type: "spring", stiffness: 45, damping: 14 }}
+        className="mx-auto max-w-6xl px-6 pt-20 pb-16 scroll-mt-24 border border-coffee/5 bg-[#fffdf9] rounded-[2.5rem] scrapbook-shadow-lg p-6 sm:p-10 mb-16 relative overflow-hidden paper"
       >
         <SectionHeading
-          eyebrow="Community"
-          title="I Found A Friend 🐾"
+          eyebrow="🐾 Add to PawBook"
+          title="Your Animal Belongs Here"
           action={
             <button
               onClick={() => {
@@ -1851,15 +1918,15 @@ function HomePage() {
                   .getElementById("share-friend-form")
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="rounded-full bg-peach px-5 py-2 text-sm font-bold text-coffee hover:scale-105 cursor-pointer"
+              className="rounded-full bg-peach px-5 py-2 text-sm font-bold text-coffee hover:scale-105 cursor-pointer animate-pulse"
             >
-              Share yours
+              + Add Animal
             </button>
           }
         />
         <p className="max-w-2xl text-sm text-coffee/70">
-          These are little souls people met on the street and wanted to remember. Every story is
-          reviewed by our tiny team before it appears here.
+          This is a living community album — every animal you add gets their own profile on PawBook.
+          Dogs, cats, birds, cows — all are welcome! 🐦🐈🐕🐄
         </p>
 
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 bg-[#e6ccb2]/20 border-4 border-dashed border-[#7f5539] rounded-3xl p-6 relative">
@@ -1871,24 +1938,22 @@ function HomePage() {
           {allSubmissions.map((r, i) => {
             const isLocal = "isLocal" in r && (r as { isLocal: boolean }).isLocal;
             const colors = ["bg-[#fefae0]", "bg-[#e8f5e9]", "bg-[#e1f5fe]", "bg-[#fce4ec]"];
-            const rotations = [
-              "rotate-1",
-              "-rotate-2",
-              "rotate-2",
-              "-rotate-1",
-              "rotate-3",
-              "-rotate-3",
-            ];
             const noteColor = colors[i % colors.length];
-            const rotation = rotations[i % rotations.length];
 
             const { needType, needStatus, cleanStory } = parseHelpBoardItem(r);
 
             return (
-              <article
+              <motion.article
                 key={r.id}
-                className={`relative p-5 scrapbook-shadow border border-coffee/10 transition-all hover:scale-103 hover:rotate-0 duration-300 ${noteColor} ${rotation} rounded-2xl flex flex-col justify-between`}
+                initial={{ opacity: 0, scale: 0.8, y: -65, rotate: i % 2 === 0 ? -12 : 12 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0, rotate: i % 2 === 0 ? -1.5 : 1.5 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -8, rotate: 0, scale: 1.03 }}
+                transition={{ type: "spring", stiffness: 65, damping: 10, delay: i * 0.08 }}
+                className={`relative p-5 scrapbook-shadow border border-coffee/10 ${noteColor} rounded-2xl flex flex-col justify-between`}
               >
+                {/* Washi Tape Snapping */}
+                <div className="washi-tape washi-tape-enter absolute -top-3.5 left-1/2 z-20 h-6 w-20 -translate-x-1/2" />
                 {/* Thumbtack */}
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl z-10 select-none drop-shadow">
                   📌
@@ -1983,7 +2048,7 @@ function HomePage() {
                     </p>
                   )}
                 </div>
-              </article>
+              </motion.article>
             );
           })}
         </div>
@@ -1991,10 +2056,17 @@ function HomePage() {
         <div id="share-friend-form" className="mt-16">
           <SubmissionSection />
         </div>
-      </section>
+      </motion.section>
 
       {/* ==================== EXPLORE SECTION ==================== */}
-      <section id="explore" className="mx-auto max-w-6xl px-6 pt-20 pb-4 scroll-mt-24">
+      <motion.section
+        id="explore"
+        initial={{ opacity: 0, y: 80, rotateX: 6 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: true, margin: "-10% 0px" }}
+        transition={{ type: "spring", stiffness: 45, damping: 14 }}
+        className="mx-auto max-w-6xl px-6 pt-20 pb-4 scroll-mt-24 border border-coffee/5 bg-[#fffdf9] rounded-[2.5rem] scrapbook-shadow-lg p-6 sm:p-10 mb-16 relative overflow-hidden paper"
+      >
         <div className="mb-2 text-sm font-bold uppercase tracking-widest text-coffee/50">
           🌈 Explore the World
         </div>
@@ -2042,6 +2114,28 @@ function HomePage() {
               >
                 ☁️
               </div>
+              {/* Drifting butterflies & falling leaves */}
+              <div className="pointer-events-none absolute inset-0 overflow-hidden z-10">
+                <div className="absolute top-10 left-10 text-3xl animate-butterfly opacity-85 select-none">
+                  🦋
+                </div>
+                <div
+                  className="absolute top-40 right-20 text-3xl animate-butterfly opacity-65 select-none"
+                  style={{ animationDelay: "3.5s" }}
+                >
+                  🦋
+                </div>
+                <div className="absolute top-0 left-1/3 text-2xl animate-falling-leaf opacity-40 select-none">
+                  🍃
+                </div>
+                <div
+                  className="absolute top-0 right-1/4 text-2xl animate-falling-leaf opacity-35 select-none"
+                  style={{ animationDelay: "4.5s" }}
+                >
+                  🍂
+                </div>
+              </div>
+
               <div className="pointer-events-none absolute bottom-6 left-1/4 text-3xl">🌳</div>
               <div className="pointer-events-none absolute bottom-10 right-16 text-3xl">🌸</div>
               <div className="pointer-events-none absolute top-1/2 left-8 text-2xl opacity-70">
@@ -2131,10 +2225,15 @@ function HomePage() {
               </p>
 
               {mapAnimal && (
-                <div className="mt-6 flex justify-center animate-fade-in">
-                  <div className="relative border border-coffee/10 bg-white p-4 pb-6 scrapbook-shadow rotate-[1.5deg] w-full max-w-sm flex gap-4 items-center rounded-2xl">
+                <div className="mt-6 flex justify-center">
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0, rotate: -8 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 1.5 }}
+                    transition={{ type: "spring", stiffness: 90, damping: 11 }}
+                    className="relative border border-coffee/10 bg-white p-4 pb-6 scrapbook-shadow w-full max-w-sm flex gap-4 items-center rounded-2xl"
+                  >
                     {/* Washi tape */}
-                    <div className="absolute -top-3 left-1/2 z-20 h-5 w-14 -translate-x-1/2 bg-yellow/40 border border-dashed border-yellow/20 opacity-75 shadow-xs" />
+                    <div className="absolute -top-3.5 left-1/2 z-20 h-5 w-14 -translate-x-1/2 bg-yellow/40 border border-dashed border-yellow/20 opacity-75 shadow-xs animate-pulse" />
 
                     <div className="w-24 aspect-square overflow-hidden rounded-xl border border-coffee/5 shrink-0 bg-cream">
                       <img
@@ -2178,7 +2277,7 @@ function HomePage() {
                         Open Passport & Stories 📖 →
                       </Link>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               )}
 
@@ -2392,17 +2491,7 @@ function HomePage() {
             </div>
           )}
         </div>
-      </section>
-
-      {/* Floating Quiz Badge */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => setQuizOpen(true)}
-          className="flex items-center gap-2 rounded-full border border-coffee bg-peach px-4 py-2.5 text-xs font-bold text-coffee scrapbook-shadow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
-        >
-          🎮 Play Quiz
-        </button>
-      </div>
+      </motion.section>
 
       <PetQuizModal forceOpen={quizOpen} onClose={() => setQuizOpen(false)} />
 
@@ -2579,180 +2668,466 @@ function SubmissionSection() {
   return <SubmitForm user={user} />;
 }
 
+const SPECIES_OPTIONS = [
+  { label: "Dog", emoji: "🐶" },
+  { label: "Cat", emoji: "🐱" },
+  { label: "Bird", emoji: "🐦" },
+  { label: "Other", emoji: "🐾" },
+];
+
+const PERSONALITY_TAGS = [
+  { label: "Friendly", emoji: "😊" },
+  { label: "Food Lover", emoji: "🍪" },
+  { label: "Playful", emoji: "🎾" },
+  { label: "Sleepy", emoji: "😴" },
+  { label: "Shy", emoji: "🥺" },
+  { label: "Needs Care", emoji: "❤️" },
+];
+
 function SubmitForm({ user }: { user: User | null }) {
-  const submit = useServerFn(submitFoundFriend);
+  const submitGuest = useServerFn(submitGuestFriend);
+  const uploadPhotoFn = useServerFn(uploadGuestPhoto);
   const router = useRouter();
+
+  const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState("");
-  const [needAName, setNeedAName] = useState(false);
   const [species, setSpecies] = useState("Dog");
-  const [needType, setNeedType] = useState("Just sharing memory");
   const [location, setLocation] = useState("");
   const [story, setStory] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [photo, setPhoto] = useState<File | null>(null);
-  const [video, setVideo] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [promiseChecked, setPromiseChecked] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const selectedSpecies = SPECIES_OPTIONS.find((s) => s.label === species) ?? SPECIES_OPTIONS[0];
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) return;
+    setPhoto(file);
+    const url = URL.createObjectURL(file);
+    setPhotoPreview(url);
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!photo) {
-      toast.error("A photo helps us remember them 📸");
+      toast.error("Please upload an animal photo! 📸");
       return;
     }
+    if (!promiseChecked) {
+      toast.error("Please check the promise box! 🐾");
+      return;
+    }
+
     setBusy(true);
+    setUploadProgress(true);
     try {
-      let activeUserId = user?.id;
-      if (!activeUserId) {
-        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
-        if (anonError) throw anonError;
-        activeUserId = anonData.user?.id;
-      }
+      // 1. Convert file to base64
+      const base64Str = await fileToBase64(photo);
 
-      if (!activeUserId) {
-        throw new Error("Could not authenticate visitor anonymously.");
-      }
-
-      const { path: photoRef } = await uploadToBucket("animal-photos", photo, activeUserId);
-      let videoRef: string | null = null;
-      if (video) {
-        const up = await uploadToBucket("pawbook-videos", video, activeUserId);
-        videoRef = up.path;
-      }
-
-      const finalName = needAName ? "Need a Name 🐾" : name;
-      const finalStory = `${story} [type:${needType}][status:open]`;
-
-      await submit({
-        data: { name: finalName, species, location, story: finalStory, photoRef, videoRef },
+      // 2. Upload photo via guest server function (bypasses RLS)
+      const uploadResult = await uploadPhotoFn({
+        data: {
+          base64: base64Str,
+          fileName: photo.name,
+          contentType: photo.type,
+        },
       });
-      toast.success("Thank you 🌸 A moderator will review it soon.");
-      setName("");
-      setNeedAName(false);
-      setLocation("");
-      setStory("");
-      setPhoto(null);
-      setVideo(null);
+
+      // 3. Submit guest found friend (bypasses RLS)
+      const animalName = name.trim() || "New Paw Friend";
+      await submitGuest({
+        data: {
+          name: animalName,
+          species,
+          location: location.trim() || undefined,
+          story: story.trim(),
+          photoRef: uploadResult.path,
+          tags: selectedTags,
+        },
+      });
+
+      // Confetti splash
+      confetti({
+        particleCount: 80,
+        spread: 80,
+        colors: ["#7f5539", "#ddb892", "#ffccd5", "#b7b7a4", "#e6ccb2"],
+      });
+
+      window.dispatchEvent(new Event("pawbook-trigger-flash"));
+      setSubmitted(true);
       router.invalidate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setBusy(false);
+      setUploadProgress(false);
     }
+  };
+
+  const reset = () => {
+    setSubmitted(false);
+    setName("");
+    setSpecies("Dog");
+    setLocation("");
+    setStory("");
+    setSelectedTags([]);
+    setPhoto(null);
+    setPhotoPreview(null);
+    setPromiseChecked(false);
+  };
+
+  // SUCCESS ANIMATION OVERLAY
+  if (submitted) {
+    return (
+      <div className="mx-auto max-w-md text-center py-10 relative">
+        <motion.div
+          initial={{ scale: 0.3, rotate: -25, y: -200 }}
+          animate={{ scale: 1.05, rotate: -1.5, y: 0 }}
+          transition={{ type: "spring", stiffness: 80, damping: 12 }}
+          className="mx-auto w-64 bg-white border border-coffee/10 scrapbook-shadow p-4 pb-8 rounded-sm relative overflow-hidden -rotate-2"
+        >
+          {/* Polaroid image */}
+          <div className="bg-cream/60 border border-coffee/5 p-1 rounded-sm relative">
+            <img src={photoPreview || ""} alt="" className="w-full h-44 object-cover rounded-sm" />
+
+            {/* Paw stamp animation overlay */}
+            <motion.div
+              initial={{ scale: 4, opacity: 0, rotate: -45 }}
+              animate={{ scale: 1, opacity: 0.85, rotate: 12 }}
+              transition={{ delay: 0.6, type: "spring", stiffness: 150, damping: 10 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none text-[#7f5539]/25 text-[8rem] font-bold"
+            >
+              🐾
+            </motion.div>
+          </div>
+          <p className="font-display text-sm font-bold text-coffee mt-4">
+            {name || "New Paw Friend"}
+          </p>
+          <span className="text-[10px] bg-peach/15 text-coffee/70 px-2 py-0.5 rounded-full font-bold">
+            {selectedSpecies.emoji} {species}
+          </span>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="space-y-4 mt-8"
+        >
+          <div className="bg-cream/40 rounded-2xl border border-coffee/10 p-6 max-w-sm mx-auto shadow-sm">
+            <h4 className="font-display text-lg font-bold text-coffee">
+              Your Paw Friend is waiting for approval 🐾
+            </h4>
+            <p className="text-xs text-coffee/70 mt-2 leading-relaxed">
+              Thank you for saving their memory.
+              <br />
+              They will join PawBook after review 💛
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={reset}
+            className="rounded-full bg-coffee px-6 py-2.5 text-xs font-bold text-cream hover:bg-coffee/90 cursor-pointer transition-all hover:scale-105 active:scale-95"
+          >
+            + Add Another Animal
+          </button>
+        </motion.div>
+      </div>
+    );
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="scrapbook-shadow mx-auto max-w-2xl rounded-3xl border border-coffee/10 bg-white/90 p-6 sm:p-8"
-    >
-      <h3 className="font-display text-2xl">Tell us about your new friend</h3>
-      <p className="mt-1 text-sm text-coffee/70">A photo, a name, a little story. That's all.</p>
-
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold flex items-center justify-between">
-            <span>Their name</span>
-            <label className="flex items-center gap-1.5 text-xs font-normal text-coffee/60 normal-case cursor-pointer">
-              <input
-                type="checkbox"
-                checked={needAName}
-                onChange={(e) => {
-                  setNeedAName(e.target.checked);
-                  if (e.target.checked) setName("");
-                }}
-              />
-              Need a Name
-            </label>
-          </label>
-          <input
-            required={!needAName}
-            disabled={needAName}
-            maxLength={80}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={needAName ? "Will be named by community..." : "e.g. Biscuit"}
-            className="mt-1 w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-sm font-normal outline-none focus:border-peach disabled:opacity-50"
-          />
+    <form onSubmit={handleSubmit} className="mx-auto max-w-4xl space-y-6">
+      {/* Header banner */}
+      <div className="rounded-3xl bg-linear-to-br from-peach/30 via-yellow/20 to-sage/20 border border-coffee/10 p-5 sm:p-6 text-center relative overflow-hidden scrapbook-shadow">
+        <div className="absolute top-2 left-4 text-2xl opacity-15 -rotate-12 select-none">🐾</div>
+        <div className="absolute bottom-2 right-4 text-2xl opacity-15 rotate-12 select-none">
+          🐾
         </div>
-        <label className="text-sm font-semibold">
-          Need Type
-          <select
-            value={needType}
-            onChange={(e) => setNeedType(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-sm font-normal outline-none focus:border-peach"
-          >
-            <option>Just sharing memory</option>
-            <option>Needs food</option>
-            <option>Needs medical care</option>
-            <option>Lost pet</option>
-            <option>Looking for adoption</option>
-          </select>
-        </label>
-        <label className="text-sm font-semibold">
-          Species
-          <select
-            value={species}
-            onChange={(e) => setSpecies(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-sm font-normal outline-none focus:border-peach"
-          >
-            <option>Dog</option>
-            <option>Cat</option>
-            <option>Bird</option>
-            <option>Cow</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label className="text-sm font-semibold">
-          Where you met
-          <input
-            required
-            maxLength={120}
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g. Behind the tea shop"
-            className="mt-1 w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-sm font-normal outline-none focus:border-peach"
-          />
-        </label>
-        <label className="sm:col-span-2 text-sm font-semibold">
-          Their little story
-          <textarea
-            required
-            minLength={10}
-            maxLength={2000}
-            rows={4}
-            value={story}
-            onChange={(e) => setStory(e.target.value)}
-            placeholder="What did they do? How did they look at you?"
-            className="mt-1 w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-sm font-normal outline-none focus:border-peach"
-          />
-        </label>
-        <label className="text-sm font-semibold">
-          Photo (required)
-          <input
-            required
-            type="file"
-            accept="image/*"
-            onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
-            className="mt-1 w-full text-xs font-normal"
-          />
-        </label>
-        <label className="text-sm font-semibold">
-          Video (optional)
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) => setVideo(e.target.files?.[0] ?? null)}
-            className="mt-1 w-full text-xs font-normal"
-          />
-        </label>
+        <h3 className="font-display text-xl sm:text-2xl font-bold text-coffee">
+          Add Your Animal to PawBook 🐾
+        </h3>
+        <p className="mt-1 text-xs text-coffee/60 max-w-md mx-auto">
+          Share a photo, location, and story. No registration needed! Anyone can add an animal
+          friend.
+        </p>
       </div>
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="mt-6 w-full rounded-full bg-coffee px-6 py-3 text-sm font-bold text-cream hover:bg-coffee/90 disabled:opacity-50 cursor-pointer"
-      >
-        {busy ? "Sending love…" : "Share this friend 🐾"}
-      </button>
+      <div className="grid gap-6 lg:grid-cols-5 items-start">
+        {/* FORM INPUTS */}
+        <div className="lg:col-span-3 rounded-3xl border border-coffee/10 bg-white scrapbook-shadow p-5 sm:p-6 space-y-4">
+          {/* Photo upload field */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
+              1. Animal Photo (Required)
+            </label>
+            <label className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-coffee/20 hover:border-peach/60 hover:bg-peach/5 cursor-pointer p-4 min-h-[120px] transition-all relative">
+              {uploadProgress && (
+                <div className="absolute inset-0 bg-white/80 z-20 flex flex-col items-center justify-center">
+                  <span className="animate-spin text-3xl mb-1">🐾</span>
+                  <span className="text-[10px] font-bold text-coffee/60 uppercase">
+                    Processing photo...
+                  </span>
+                </div>
+              )}
+              {photoPreview ? (
+                <div className="flex items-center gap-3 w-full">
+                  <img
+                    src={photoPreview}
+                    alt=""
+                    className="size-16 object-cover rounded-lg border border-coffee/10"
+                  />
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-coffee truncate max-w-[180px]">
+                      {photo?.name}
+                    </p>
+                    <p className="text-[10px] text-coffee/50">
+                      {(photo?.size ?? 0) / 1024 > 1024
+                        ? `${((photo?.size ?? 0) / 1024 / 1024).toFixed(1)} MB`
+                        : `${((photo?.size ?? 0) / 1024).toFixed(0)} KB`}
+                    </p>
+                    <span className="text-[9px] text-peach font-bold uppercase tracking-wide mt-1 block">
+                      Click to change
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center space-y-1">
+                  <span className="text-3xl">🖼️</span>
+                  <p className="text-xs font-bold text-coffee/70">Click to choose image</p>
+                  <p className="text-[9px] text-coffee/40">PNG, JPG, WEBP supported</p>
+                </div>
+              )}
+              <input
+                required
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="sr-only"
+              />
+            </label>
+          </div>
+
+          {/* Animal Name */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
+              2. Animal Name
+            </label>
+            <input
+              type="text"
+              maxLength={80}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Do they have a name?"
+              className="w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-xs outline-none focus:border-peach"
+            />
+          </div>
+
+          {/* Animal Type */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
+              3. Animal Type
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {SPECIES_OPTIONS.map((s) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  onClick={() => setSpecies(s.label)}
+                  className={`flex flex-col items-center gap-1 py-2 rounded-xl border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                    species === s.label
+                      ? "border-peach bg-peach/10 font-bold scale-105"
+                      : "border-coffee/10 bg-cream/20 hover:border-coffee/20"
+                  }`}
+                >
+                  <span className="text-2xl">{s.emoji}</span>
+                  <span className="text-[10px] text-coffee">{s.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Location Seen */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
+              4. Location Seen (Optional)
+            </label>
+            <input
+              type="text"
+              maxLength={120}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Where did you meet them?"
+              className="w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-xs outline-none focus:border-peach"
+            />
+            <p className="text-[9px] text-coffee/40 mt-1 italic">
+              Examples: Near college gate, Garden area, Street corner
+            </p>
+          </div>
+
+          {/* Story / Memory */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
+              5. Small Story / Memory
+            </label>
+            <textarea
+              required
+              minLength={10}
+              maxLength={2000}
+              rows={3}
+              value={story}
+              onChange={(e) => setStory(e.target.value)}
+              placeholder="Tell their little story..."
+              className="w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-xs outline-none focus:border-peach resize-none"
+            />
+            <p className="text-[9px] text-coffee/40 mt-0.5 italic">
+              Example: "This little friend waits near my home every morning 💛"
+            </p>
+          </div>
+
+          {/* Personality Tags */}
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-2">
+              6. Personality Tags
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {PERSONALITY_TAGS.map((t) => {
+                const active = selectedTags.includes(t.label);
+                return (
+                  <button
+                    key={t.label}
+                    type="button"
+                    onClick={() => toggleTag(t.label)}
+                    className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold cursor-pointer transition-all ${
+                      active
+                        ? "border-coffee bg-coffee text-cream scale-105"
+                        : "border-coffee/10 bg-white text-coffee hover:border-coffee/30"
+                    }`}
+                  >
+                    <span>{t.emoji}</span> {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Anti-spam checkbox */}
+          <div className="pt-2 border-t border-coffee/5">
+            <label className="flex items-start gap-2 text-xs text-coffee/70 cursor-pointer select-none">
+              <input
+                required
+                type="checkbox"
+                checked={promiseChecked}
+                onChange={(e) => setPromiseChecked(e.target.checked)}
+                className="mt-0.5 rounded accent-coffee cursor-pointer"
+              />
+              <span>I promise this is a real animal memory 🐾</span>
+            </label>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={busy || !promiseChecked || !photo}
+            className="w-full rounded-full bg-coffee py-3 text-sm font-bold text-cream hover:bg-coffee/90 disabled:opacity-40 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+          >
+            {busy ? (
+              <>
+                <span className="animate-spin text-base">🐾</span> Sharing Story…
+              </>
+            ) : (
+              <>Add Their Story To PawBook 🐾</>
+            )}
+          </button>
+        </div>
+
+        {/* LIVE PREVIEW CARD */}
+        <div className="lg:col-span-2 sticky top-24">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/40 mb-3 text-center">
+            Live Preview
+          </p>
+          <motion.div
+            animate={{ rotate: 1.5 }}
+            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+            className="rounded-2xl bg-white border border-coffee/10 scrapbook-shadow overflow-hidden relative p-1"
+          >
+            <div className="washi-tape absolute -top-3 left-1/2 -translate-x-1/2 z-10 h-6 w-20" />
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl z-10 select-none drop-shadow">
+              📌
+            </div>
+
+            <div className="bg-cream/60 border border-coffee/5 mx-3 mt-6 mb-1 rounded-sm p-1.5 pb-6">
+              {photoPreview ? (
+                <img src={photoPreview} alt="" className="w-full h-36 object-cover rounded-sm" />
+              ) : (
+                <div className="w-full h-36 bg-coffee/5 rounded-sm flex items-center justify-center">
+                  <span className="text-4xl opacity-30">{selectedSpecies.emoji}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="px-4 pb-4 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className="font-display text-sm font-bold text-coffee truncate max-w-[120px]">
+                  {name.trim() || "New Paw Friend"}
+                </p>
+                <span className="text-[10px] bg-coffee/5 text-coffee/60 px-2 py-0.5 rounded-full font-bold">
+                  {selectedSpecies.emoji} {species}
+                </span>
+              </div>
+              {location.trim() && (
+                <p className="text-[9px] text-coffee/50 font-semibold truncate">📍 {location}</p>
+              )}
+
+              {selectedTags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selectedTags.map((t) => (
+                    <span
+                      key={t}
+                      className="text-[8px] bg-peach/15 border border-peach/20 text-coffee/80 px-1.5 py-0.5 rounded-full font-bold"
+                    >
+                      {PERSONALITY_TAGS.find((pt) => pt.label === t)?.emoji || ""} {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {story.trim() && (
+                <p className="text-coffee/70 font-hand text-xs leading-relaxed line-clamp-3 italic">
+                  "{story}"
+                </p>
+              )}
+            </div>
+          </motion.div>
+
+          <p className="text-[9px] text-coffee/30 text-center mt-3 italic">
+            This is how the profile card will look
+          </p>
+        </div>
+      </div>
     </form>
   );
 }

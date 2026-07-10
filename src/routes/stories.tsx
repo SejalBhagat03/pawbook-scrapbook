@@ -33,7 +33,7 @@ function StoriesPage() {
       toast.error("Please enter your name and comment!");
       return;
     }
-    
+
     const updatedMemories = cmsMemories.map((mem) => {
       if (mem.id === memoryId) {
         const existingComments = mem.comments || [];
@@ -150,7 +150,9 @@ function StoriesPage() {
                     <p key={c.id} className="text-xs animate-fade-in">
                       <span className="font-bold">{c.author}:</span>{" "}
                       <span className="text-coffee/80">{c.text}</span>
-                      <span className="text-[8px] text-coffee/40 block leading-tight">{c.date}</span>
+                      <span className="text-[8px] text-coffee/40 block leading-tight">
+                        {c.date}
+                      </span>
                     </p>
                   ))}
                 </div>
@@ -173,7 +175,9 @@ function StoriesPage() {
                     type="text"
                     placeholder="Write a kind word..."
                     value={commentTexts[m.id] || ""}
-                    onChange={(e) => setCommentTexts((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                    onChange={(e) =>
+                      setCommentTexts((prev) => ({ ...prev, [m.id]: e.target.value }))
+                    }
                     className="flex-1 rounded-xl border border-coffee/10 bg-white/70 px-2 py-1 text-xs focus:outline-none focus:border-peach"
                   />
                   <button

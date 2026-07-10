@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "A cozy digital world where street dogs, cats, birds and nature memories become characters with their own stories, profiles and diaries.",
+          "A cozy digital world where dogs, cats, birds and all animals become characters with their own stories, profiles and diaries.",
       },
       { name: "author", content: "Sejal" },
       { name: "theme-color", content: "#FFF7E8" },
@@ -86,7 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "Little paws. Big stories. A peaceful place where every street friend is remembered.",
+          "Little paws. Big stories. A peaceful place where every animal friend is remembered.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

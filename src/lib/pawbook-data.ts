@@ -614,6 +614,52 @@ const defaultSurprises: SurpriseReward[] = [
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 
+// ---------------------------------------------------------------------------
+// normalizeAnimal — guarantees every Animal object (including guest uploads
+// from Supabase) has safe default values for every array / string field.
+// Without this, old or minimal records crash the UI when code calls
+// undefined.slice() or undefined.map().
+// ---------------------------------------------------------------------------
+export function normalizeAnimal(raw: Partial<Animal>): Animal {
+  return {
+    slug: raw.slug ?? "unknown",
+    name: raw.name ?? "Unnamed Friend",
+    emoji: raw.emoji ?? "🐾",
+    nickname: raw.nickname ?? "Street Friend",
+    bio: raw.bio ?? "",
+    story: raw.story ?? "",
+    image: raw.image ?? "",
+    color: raw.color ?? "peach",
+    personality: raw.personality ?? "Friendly",
+    home: raw.home ?? "Unknown Area",
+    favoriteFood: raw.favoriteFood ?? "Whatever is offered 🍪",
+    firstMet: raw.firstMet ?? "Recently",
+    mood: raw.mood ?? "Curious 🌸",
+    status: raw.status ?? "new-friend",
+    stats: raw.stats ?? { pawPrints: 0, treats: 0, memories: 0, adventures: 0 },
+    badges: Array.isArray(raw.badges) ? raw.badges : [],
+    lastSeenLocation: raw.lastSeenLocation ?? "Unknown",
+    lastUpdated: raw.lastUpdated ?? "Recently",
+    pawId: raw.pawId ?? `PB-GUEST-${Date.now()}`,
+    ageEstimate: raw.ageEstimate ?? "Unknown",
+    gender: raw.gender ?? "Unknown",
+    breedType: raw.breedType ?? "Street Dog / Cat",
+    knownSince: raw.knownSince ?? "Recently",
+    homeArea: raw.homeArea ?? "Unknown",
+    vaccinated: raw.vaccinated ?? false,
+    sterilized: raw.sterilized ?? false,
+    medicalNotes: raw.medicalNotes ?? "No medical records yet.",
+    healthRecords: Array.isArray(raw.healthRecords) ? raw.healthRecords : [],
+    friendliness: raw.friendliness ?? 80,
+    energy: raw.energy ?? 70,
+    trust: raw.trust ?? 75,
+    playfulness: raw.playfulness ?? 75,
+    communityLove: raw.communityLove ?? { followers: 0, memories: 0, helpers: 0 },
+    dailyThought: raw.dailyThought ?? raw.story ?? "Just happy to be here 🐾",
+    careTimeline: Array.isArray(raw.careTimeline) ? raw.careTimeline : [],
+  };
+}
+
 // Live Mutable Variables
 export let animals: Animal[] = [...defaultAnimals];
 export let memories: Memory[] = [...defaultMemories];
@@ -624,23 +670,6 @@ export let surprises: SurpriseReward[] = [...defaultSurprises];
 
 // Sync arrays from Supabase on client-side
 if (typeof window !== "undefined") {
-  // Clear outdated local storage cache if it contains Bruno
-  const localAnimals = localStorage.getItem("pawbook-cms-animals");
-  if (localAnimals && localAnimals.includes('"slug":"bruno"')) {
-    localStorage.removeItem("pawbook-cms-animals");
-    localStorage.removeItem("pawbook-cms-memories");
-    localStorage.removeItem("pawbook-cms-dialogues");
-    localStorage.removeItem("pawbook-cms-quiz");
-    localStorage.removeItem("pawbook-cms-spinwheel");
-    localStorage.removeItem("pawbook-cms-surprises");
-    animals = [...defaultAnimals];
-    memories = [...defaultMemories];
-    dialogues = [...defaultDialogues];
-    quizQuestions = [...defaultQuizQuestions];
-    spinRewards = [...defaultSpinRewards];
-    surprises = [...defaultSurprises];
-  }
-
   const syncCMS = async () => {
     try {
       const { data, error } = await supabase
@@ -652,48 +681,16 @@ if (typeof window !== "undefined") {
       if (error) throw error;
 
       if (data) {
-        const fetchedAnimals = (data.animals as unknown as Animal[]) || defaultAnimals;
-        const hasBruno = fetchedAnimals.some((a) => a.slug === "bruno");
-
-        if (hasBruno) {
-          console.log(
-            "Outdated database seed (Bruno) found. Overwriting Supabase database with Coco seed...",
-          );
-          try {
-            await supabase
-              .from("cms_data")
-              .update({
-                animals: defaultAnimals,
-                memories: defaultMemories,
-                dialogues: defaultDialogues,
-                quiz_questions: defaultQuizQuestions,
-                spin_rewards: defaultSpinRewards,
-                surprises: defaultSurprises,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", "main");
-          } catch (dbErr) {
-            console.warn(
-              "Could not update Supabase database. Falling back to local cache override.",
-              dbErr,
-            );
-          }
-
-          animals = defaultAnimals;
-          memories = defaultMemories;
-          dialogues = defaultDialogues;
-          quizQuestions = defaultQuizQuestions;
-          spinRewards = defaultSpinRewards;
-          surprises = defaultSurprises;
-        } else {
-          animals = fetchedAnimals;
-          memories = (data.memories as unknown as Memory[]) || defaultMemories;
-          dialogues = (data.dialogues as unknown as PetDialogue[]) || defaultDialogues;
-          quizQuestions =
-            (data.quiz_questions as unknown as QuizQuestion[]) || defaultQuizQuestions;
-          spinRewards = (data.spin_rewards as unknown as SpinReward[]) || defaultSpinRewards;
-          surprises = (data.surprises as unknown as SurpriseReward[]) || defaultSurprises;
-        }
+        // Always load whatever is stored in Supabase — never auto-reset.
+        // Run every animal through normalizeAnimal() so guest-uploaded records
+        // with missing fields never crash the UI with undefined.slice() errors.
+        const rawAnimals = (data.animals as unknown as Partial<Animal>[]) || defaultAnimals;
+        animals = rawAnimals.map(normalizeAnimal);
+        memories = (data.memories as unknown as Memory[]) || defaultMemories;
+        dialogues = (data.dialogues as unknown as PetDialogue[]) || defaultDialogues;
+        quizQuestions = (data.quiz_questions as unknown as QuizQuestion[]) || defaultQuizQuestions;
+        spinRewards = (data.spin_rewards as unknown as SpinReward[]) || defaultSpinRewards;
+        surprises = (data.surprises as unknown as SurpriseReward[]) || defaultSurprises;
 
         localStorage.setItem("pawbook-cms-animals", JSON.stringify(animals));
         localStorage.setItem("pawbook-cms-memories", JSON.stringify(memories));

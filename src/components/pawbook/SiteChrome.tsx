@@ -6,6 +6,9 @@ import { DailySurpriseBox } from "./DailySurpriseBox";
 import { toast } from "sonner";
 import { MousePawTrail } from "./MousePawTrail";
 import { OpeningBookIntro } from "./OpeningBookIntro";
+import { motion, AnimatePresence } from "framer-motion";
+import { useServerFn } from "@tanstack/react-start";
+import { getPendingSubmissionsCount } from "@/lib/submissions.functions";
 
 const navLinks = [
   { to: "/", hash: "home", label: "Home" },
@@ -196,10 +199,28 @@ export function TopNav() {
     </nav>
   );
 }
-
 function AuthAffordance() {
   const { user, loading } = useSession();
   const navigate = useNavigate();
+  const getCountFn = useServerFn(getPendingSubmissionsCount);
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const checkPending = () => {
+      getCountFn()
+        .then(({ count }) => {
+          setPendingCount(count);
+        })
+        .catch((err) => console.error("Failed to query pending count via server fn:", err));
+    };
+
+    checkPending();
+    const interval = setInterval(checkPending, 10000);
+    return () => clearInterval(interval);
+  }, [user, getCountFn]);
+
   if (loading) return null;
 
   // Only show the Studio controls if you are signed in with an email account (Admin)
@@ -218,10 +239,15 @@ function AuthAffordance() {
       </Link>
       <Link
         to="/admin/moderation"
-        className="hidden rounded-full border border-coffee/15 bg-white px-3 py-1.5 text-xs font-bold text-coffee/80 hover:bg-cream sm:inline-flex"
+        className="inline-flex items-center gap-1.5 rounded-full border-2 border-coffee/20 bg-white px-3 py-1.5 text-xs font-bold text-coffee/80 hover:bg-peach/20 hover:border-peach transition-all"
         title="Moderation queue (admins only)"
       >
-        🛡️ Mod
+        🛡️ <span className="hidden sm:inline">Mod</span>
+        {pendingCount !== null && pendingCount > 0 && (
+          <span className="rounded-full bg-peach px-1.5 py-0.5 text-[9px] font-bold text-coffee animate-pulse">
+            {pendingCount}
+          </span>
+        )}
       </Link>
       <button
         onClick={async () => {
@@ -288,13 +314,95 @@ export function SunlightOverlay() {
   );
 }
 
+function WalkingDogLoader() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-cream/95 backdrop-blur-xs"
+    >
+      <div className="text-center space-y-4">
+        {/* Walking dog and paw prints */}
+        <div className="flex items-center justify-center gap-2 text-5xl">
+          <motion.span
+            animate={{
+              y: [0, -10, 0],
+              rotate: [0, -5, 5, 0],
+            }}
+            transition={{
+              duration: 0.6,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="inline-block"
+          >
+            🐕
+          </motion.span>
+          <div className="flex gap-1.5 ml-2">
+            {[0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5] }}
+                transition={{
+                  duration: 1.2,
+                  repeat: Infinity,
+                  delay: i * 0.4,
+                  ease: "easeInOut",
+                }}
+                className="text-2xl"
+              >
+                🐾
+              </motion.span>
+            ))}
+          </div>
+        </div>
+        <h3 className="font-display text-xl text-coffee font-semibold animate-pulse">
+          Finding Paw Friends...
+        </h3>
+      </div>
+    </motion.div>
+  );
+}
+
 export function PageShell({ children }: { children: ReactNode }) {
+  const routerState = useRouterState();
+  const isPending = routerState.status === "pending";
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const played = sessionStorage.getItem("pawbook-intro-played");
+    if (played === "true") {
+      setInitialLoading(true);
+      const timer = setTimeout(() => setInitialLoading(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const showLoader = isMounted && (initialLoading || isPending);
+
   return (
     <div className="relative min-h-screen bg-cream text-coffee">
+      <AnimatePresence>{showLoader && <WalkingDogLoader />}</AnimatePresence>
       <SunlightOverlay />
       <div className="relative z-20">
         <TopNav />
-        <main className="pb-6 md:pb-16">{children}</main>
+        <main className="pb-6 md:pb-16 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={routerState.location.pathname}
+              initial={{ opacity: 0, y: 18, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -18, filter: "blur(4px)" }}
+              transition={{ duration: 0.5, ease: [0.25, 0.8, 0.25, 1] }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
         <SiteFooter />
       </div>
       <DailySurpriseBox />
@@ -332,19 +440,22 @@ export function SiteFooter() {
   };
 
   return (
-    <footer className="relative z-10 mt-6 md:mt-16 border-t border-coffee/10 bg-cream/60 px-6 py-10">
-      <div className="mx-auto grid max-w-6xl gap-6 text-sm md:grid-cols-3">
-        <div>
-          <div className="flex items-center gap-2 font-display text-xl">
+    <footer className="relative z-10 mt-6 md:mt-16 border-t border-coffee/10 bg-cream/60 px-6 py-6 md:py-10">
+      <div className="mx-auto max-w-6xl text-sm flex flex-col md:flex-row md:justify-between gap-6 md:gap-12">
+        {/* Brand details */}
+        <div className="flex flex-col gap-1.5 md:max-w-xs">
+          <div className="flex items-center gap-2 font-display text-lg md:text-xl">
             <span>🐾</span> PawBook
           </div>
-          <p className="mt-2 max-w-xs text-coffee/70">
+          <p className="text-xs md:text-sm text-coffee/70">
             A cozy corner of the internet where every little life is remembered.
           </p>
         </div>
-        <div className="space-y-2 text-coffee/70">
-          <p className="font-bold text-coffee">Wander around</p>
-          <div className="flex flex-col gap-1">
+
+        {/* Links row */}
+        <div className="flex flex-col gap-1.5">
+          <p className="font-bold text-coffee text-xs md:text-sm">Wander around</p>
+          <div className="flex flex-wrap md:flex-col gap-x-4 gap-y-1.5 text-xs md:text-sm text-coffee/70">
             <Link to="/" hash="paw-friends" className="hover:text-peach">
               Paw Friends
             </Link>
@@ -359,21 +470,25 @@ export function SiteFooter() {
             </Link>
           </div>
         </div>
-        <div className="space-y-2 text-coffee/70">
-          <p className="font-bold text-coffee">The human behind PawBook</p>
-          <p>
-            Built with technology and kindness by{" "}
-            <Link to="/about" className="font-bold text-peach hover:underline">
-              Sejal ❤️
-            </Link>
-          </p>
-          <div className="pt-2">
-            <button
-              onClick={toggleMotion}
-              className="flex items-center gap-1.5 rounded-full border border-coffee/15 bg-white/80 px-3 py-1 text-xs font-bold text-coffee hover:bg-white transition-colors cursor-pointer"
-            >
-              <span>{reduceMotion ? "🍃 Motion: Low" : "✨ Motion: Cozy"}</span>
-            </button>
+
+        {/* Author / Motion settings */}
+        <div className="flex flex-col gap-1.5">
+          <p className="font-bold text-coffee text-xs md:text-sm">The human behind PawBook</p>
+          <div className="flex flex-wrap md:flex-col items-center md:items-start gap-3 md:gap-2 text-xs md:text-sm text-coffee/70">
+            <p>
+              Built with technology and kindness by{" "}
+              <Link to="/about" className="font-bold text-peach hover:underline">
+                Sejal ❤️
+              </Link>
+            </p>
+            <div className="pt-0.5">
+              <button
+                onClick={toggleMotion}
+                className="flex items-center gap-1.5 rounded-full border border-coffee/15 bg-white/80 px-2.5 py-0.5 text-[10px] md:text-xs font-bold text-coffee hover:bg-white transition-colors cursor-pointer"
+              >
+                <span>{reduceMotion ? "🍃 Motion: Low" : "✨ Motion: Cozy"}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

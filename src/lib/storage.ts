@@ -18,11 +18,16 @@ export async function uploadToBucket(
   return { path: `${bucket}/${path}` };
 }
 
-/** photo_url column stores "bucket/key". Turn it into a short-lived signed URL. */
+/** photo_url column stores "bucket/key". Get its public URL. */
 export async function signedUrlFor(storageRef: string, expiresIn = 3600): Promise<string | null> {
   const [bucket, ...rest] = storageRef.split("/");
   const key = rest.join("/");
   if (!bucket || !key) return null;
-  const { data } = await supabase.storage.from(bucket).createSignedUrl(key, expiresIn);
-  return data?.signedUrl ?? null;
+  try {
+    const { data } = supabase.storage.from(bucket).getPublicUrl(key);
+    return data.publicUrl;
+  } catch (err) {
+    console.error("Failed to resolve public URL:", err);
+    return null;
+  }
 }

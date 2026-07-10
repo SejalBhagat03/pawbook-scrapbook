@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../src";
 @source inline("bg-sky bg-sky/20 bg-sky/30 bg-sky/40 bg-sky/50 bg-sky/60 bg-sky/70 bg-peach bg-peach/20 bg-peach/30 bg-peach/40 bg-peach/50 bg-peach/60 bg-peach/70 bg-peach/80 bg-peach/90 bg-sage bg-sage/20 bg-sage/30 bg-sage/40 bg-sage/50 bg-sage/60 bg-sage/70 bg-yellow bg-yellow/20 bg-yellow/30 bg-yellow/40 bg-yellow/50 bg-yellow/60 bg-yellow/70 bg-yellow/80 bg-yellow/90 bg-cream bg-cream/40 bg-cream/50 bg-cream/60 bg-cream/80 bg-coffee bg-coffee/5 bg-coffee/10 bg-coffee/15 bg-coffee/20 text-sage text-peach text-coffee text-cream text-yellow-700 border-sage/40 border-sage/50 border-sage/60 border-peach/50 border-coffee/5 border-coffee/10 border-coffee/15 border-coffee/20 rotate-1 -rotate-1 -rotate-2 rotate-2");
 @import "tw-animate-css";
@@ -352,7 +352,9 @@
 .polaroid-card {
   opacity: 0;
   transform: translateY(-80px) rotate(var(--random-rotate, 0deg)) scale(0.9);
-  transition: opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .polaroid-card.landed {
   opacity: 1;
@@ -377,7 +379,9 @@
   transform: rotateX(180deg);
 }
 .envelope-paper {
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+  transition:
+    transform 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 0.5s ease;
   transform: translateY(0);
 }
 .envelope-open .envelope-paper {
@@ -429,8 +433,181 @@
   animation: pawWalk 1.6s infinite ease-in-out;
 }
 @keyframes pawWalk {
-  0%, 100% { opacity: 0; transform: translateY(0); }
-  25% { opacity: 1; transform: translateY(-4px); }
-  50% { opacity: 0.3; transform: translateY(0); }
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
 }
 
+/* Custom Paw Cursor and Global Animation Layers */
+.custom-cursor {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'><text y='20' font-size='20'>🐾</text></svg>");
+  background-size: contain;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform 0.08s ease-out;
+}
+
+.custom-cursor.hovering {
+  transform: translate(-50%, -50%) scale(1.5);
+}
+
+.cursor-hide * {
+  cursor: none !important;
+}
+
+@keyframes sunrise-glow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-sunrise {
+  background: linear-gradient(135deg, #ffe5ec, #fff0f5, #fffbeb, #ffedd5, #ffe4e6);
+  background-size: 400% 400%;
+  animation: sunrise-glow 15s ease infinite;
+}
+
+@keyframes float-leaf {
+  0% {
+    transform: translateY(-10vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(110vh) translateX(100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.animate-falling-leaf {
+  animation: float-leaf 12s linear infinite;
+}
+
+@keyframes fly-butterfly {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(120px, -80px) rotate(15deg);
+  }
+  50% {
+    transform: translate(250px, 20px) rotate(-15deg);
+  }
+  75% {
+    transform: translate(380px, -90px) rotate(10deg);
+  }
+  100% {
+    transform: translate(500px, -30px) rotate(0deg);
+  }
+}
+
+.animate-butterfly {
+  animation: fly-butterfly 20s ease-in-out infinite alternate;
+}
+
+/* Scrapbook Page Curl & lifts */
+.scrapbook-page-container {
+  perspective: 1800px;
+}
+
+.scrapbook-page {
+  transform-origin: top center;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.scrapbook-page::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    rgba(74, 46, 32, 0.15) 50%,
+    rgba(74, 46, 32, 0.05) 100%
+  );
+  border-bottom-right-radius: 1rem;
+  transition:
+    width 0.4s ease,
+    height 0.4s ease;
+}
+
+.scrapbook-page:hover::after {
+  width: 30px;
+  height: 30px;
+  box-shadow: -5px -5px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* camera flash */
+.camera-flash {
+  position: fixed;
+  inset: 0;
+  background-color: white;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+}
+
+@keyframes flash-anim {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-flash {
+  animation: flash-anim 0.6s ease-out forwards;
+}
+
+/* Washi tape attach */
+@keyframes tape-attach {
+  0% {
+    transform: scale(1.8) rotate(-15deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(0.95) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(2deg);
+    opacity: 0.9;
+  }
+}
+
+.washi-tape-enter {
+  animation: tape-attach 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}

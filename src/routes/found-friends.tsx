@@ -169,23 +169,16 @@ function SubmitForm({ user }: { user: User | null }) {
       toast.error("A photo helps us remember them 📸");
       return;
     }
+    if (!user?.id) {
+      toast.error("Please sign in first to add an animal 🐾");
+      return;
+    }
     setBusy(true);
     try {
-      let activeUserId = user?.id;
-      if (!activeUserId) {
-        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
-        if (anonError) throw anonError;
-        activeUserId = anonData.user?.id;
-      }
-
-      if (!activeUserId) {
-        throw new Error("Could not authenticate visitor anonymously.");
-      }
-
-      const { path: photoRef } = await uploadToBucket("animal-photos", photo, activeUserId);
+      const { path: photoRef } = await uploadToBucket("animal-photos", photo, user.id);
       let videoRef: string | null = null;
       if (video) {
-        const up = await uploadToBucket("pawbook-videos", video, activeUserId);
+        const up = await uploadToBucket("pawbook-videos", video, user.id);
         videoRef = up.path;
       }
       await submit({ data: { name, species, location, story, photoRef, videoRef } });
@@ -264,7 +257,7 @@ function SubmitForm({ user }: { user: User | null }) {
         <label className="text-sm font-semibold">
           Photo (required)
           <input
-            required
+            required={!photo}
             type="file"
             accept="image/*"
             onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
@@ -282,9 +275,25 @@ function SubmitForm({ user }: { user: User | null }) {
         </label>
       </div>
 
+      {/* Sign-in gate if not authenticated */}
+      {!user && (
+        <div className="mt-6 rounded-2xl bg-peach/10 border border-peach/30 p-4 text-center space-y-2">
+          <p className="text-sm font-bold text-coffee">🔐 Sign in to add your animal</p>
+          <p className="text-xs text-coffee/60">
+            A free account lets you track your submissions and get updates.
+          </p>
+          <Link
+            to="/auth"
+            className="inline-flex items-center gap-1.5 rounded-full bg-coffee px-5 py-2 text-xs font-bold text-cream hover:bg-coffee/90 cursor-pointer mt-1"
+          >
+            Sign In / Sign Up →
+          </Link>
+        </div>
+      )}
+
       <button
         type="submit"
-        disabled={busy}
+        disabled={busy || !user}
         className="mt-6 w-full rounded-full bg-coffee px-6 py-3 text-sm font-bold text-cream hover:bg-coffee/90 disabled:opacity-50"
       >
         {busy ? "Sending love…" : "Share this friend 🐾"}
