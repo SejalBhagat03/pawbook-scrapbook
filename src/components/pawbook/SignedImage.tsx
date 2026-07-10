@@ -1,6 +1,35 @@
 import { useEffect, useState } from "react";
 import { signedUrlFor, resolveAsset } from "@/lib/storage";
 
+function isLocalAsset(ref: string): boolean {
+  if (!ref) return false;
+  if (
+    ref.startsWith("data:") ||
+    ref.startsWith("blob:") ||
+    ref.startsWith("http:") ||
+    ref.startsWith("https:") ||
+    ref.startsWith("/src/assets/") ||
+    ref.startsWith("src/assets/") ||
+    ref.startsWith("/assets/")
+  ) {
+    return true;
+  }
+  const filename = ref.split("/").pop();
+  const staticFiles = [
+    "bruno.jpg",
+    "coco.jpg",
+    "moti.jpg",
+    "kitty.jpg",
+    "tommy.jpg",
+    "post-moti.jpg",
+    "post-kitty.jpg",
+  ];
+  if (filename && staticFiles.includes(filename)) {
+    return true;
+  }
+  return false;
+}
+
 export function SignedImage({
   storageRef,
   alt,
@@ -12,17 +41,7 @@ export function SignedImage({
 }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    if (
-      storageRef.startsWith("data:") ||
-      storageRef.startsWith("blob:") ||
-      storageRef.startsWith("http") ||
-      storageRef.startsWith("/src/assets/") ||
-      storageRef.startsWith("/") ||
-      storageRef.endsWith(".jpg") ||
-      storageRef.endsWith(".jpeg") ||
-      storageRef.endsWith(".png") ||
-      storageRef.endsWith(".webp")
-    ) {
+    if (isLocalAsset(storageRef)) {
       setUrl(resolveAsset(storageRef));
       return;
     }
@@ -43,15 +62,7 @@ export function SignedImage({
 export function SignedVideo({ storageRef, className }: { storageRef: string; className?: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    if (
-      storageRef.startsWith("data:") ||
-      storageRef.startsWith("blob:") ||
-      storageRef.startsWith("http") ||
-      storageRef.startsWith("/src/assets/") ||
-      storageRef.startsWith("/") ||
-      storageRef.endsWith(".mp4") ||
-      storageRef.endsWith(".webm")
-    ) {
+    if (isLocalAsset(storageRef)) {
       setUrl(resolveAsset(storageRef));
       return;
     }
