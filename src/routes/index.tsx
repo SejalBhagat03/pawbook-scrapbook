@@ -1163,7 +1163,11 @@ function HomePage() {
                     }}
                     aria-label={`Feature ${a.name}`}
                   >
-                    <img src={a.image} alt={a.name} className="h-full w-full object-cover" />
+                    <img
+                      src={resolveAsset(a.image)}
+                      alt={a.name}
+                      className="h-full w-full object-cover"
+                    />
                     <span className="absolute inset-x-0 bottom-1 mx-auto w-fit rounded bg-white/95 px-2 py-0.5 text-[10px] font-bold opacity-0 transition-opacity group-hover:opacity-100">
                       {a.name}
                     </span>
@@ -1398,7 +1402,11 @@ function HomePage() {
                   className="flex items-center gap-3 shrink-0 snap-center bg-[#FDFBF7]/60 border border-coffee/5 rounded-2xl p-2 pr-4 shadow-2xs"
                 >
                   <div className="relative size-12 rounded-full border-2 border-peach overflow-hidden shrink-0">
-                    <img src={a.image} alt={a.name} className="h-full w-full object-cover" />
+                    <img
+                      src={resolveAsset(a.image)}
+                      alt={a.name}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-coffee flex items-center gap-1">
@@ -1756,7 +1764,7 @@ function HomePage() {
 
                     <div className="overflow-hidden rounded bg-cream aspect-4/3 w-full relative">
                       <img
-                        src={m.image}
+                        src={resolveAsset(m.image)}
                         alt={m.title}
                         loading="eager"
                         className="w-full h-full object-cover"
@@ -1786,7 +1794,7 @@ function HomePage() {
                     <header className="mb-3 flex items-center justify-between gap-3 pb-2 border-b border-coffee/5">
                       <div className="flex min-w-0 items-center gap-2.5">
                         <img
-                          src={a.image}
+                          src={resolveAsset(a.image)}
                           alt=""
                           className="size-8 shrink-0 rounded-full border border-white object-cover"
                         />
@@ -2213,7 +2221,11 @@ function HomePage() {
                         </div>
                       </div>
                       <div className="mx-auto size-14 overflow-hidden rounded-full border-4 border-white bg-white animate-float shadow-lg transition-transform group-hover:scale-110">
-                        <img src={a.image} alt={a.name} className="h-full w-full object-cover" />
+                        <img
+                          src={resolveAsset(a.image)}
+                          alt={a.name}
+                          className="h-full w-full object-cover"
+                        />
                       </div>
                     </button>
                   );
@@ -2237,7 +2249,7 @@ function HomePage() {
 
                     <div className="w-24 aspect-square overflow-hidden rounded-xl border border-coffee/5 shrink-0 bg-cream">
                       <img
-                        src={mapAnimal.image}
+                        src={resolveAsset(mapAnimal.image)}
                         alt={mapAnimal.name}
                         className="size-full object-cover"
                       />
@@ -2289,7 +2301,11 @@ function HomePage() {
                     params={{ slug: a.slug }}
                     className="flex items-center gap-3 rounded-2xl border border-coffee/10 bg-white p-3 scrapbook-shadow hover:-translate-y-1 transition-transform"
                   >
-                    <img src={a.image} alt="" className="size-12 rounded-full object-cover" />
+                    <img
+                      src={resolveAsset(a.image)}
+                      alt=""
+                      className="size-12 rounded-full object-cover"
+                    />
                     <div className="text-left">
                       <p className="text-sm font-bold">
                         {a.name} {a.emoji}

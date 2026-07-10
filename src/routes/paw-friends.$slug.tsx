@@ -11,6 +11,7 @@ import {
 } from "@/lib/pawbook-data";
 import { copyToClipboard, shareContent } from "@/lib/utils";
 import { playBark, playMeow, playHappyChime, playPawSteps, playPageFlip } from "@/lib/sound";
+import { resolveAsset } from "@/lib/storage";
 
 export const Route = createFileRoute("/paw-friends/$slug")({
   loader: ({ params }): { animal: Animal } => {
@@ -347,7 +348,7 @@ function AnimalProfile() {
               <div className="washi-tape absolute -top-3 left-1/2 z-20 h-6 w-20 -translate-x-1/2 rotate-3" />
               <div className="rounded-full border-8 border-white bg-white scrapbook-shadow relative overflow-hidden size-40 sm:size-48 flex items-center justify-center">
                 <img
-                  src={a.image}
+                  src={resolveAsset(a.image)}
                   alt={a.name}
                   className="h-full w-full object-cover"
                   style={a.slug === "coco" ? { objectPosition: "center 25%" } : undefined}
@@ -731,7 +732,7 @@ function AnimalProfile() {
                   >
                     <div className="aspect-video overflow-hidden">
                       <img
-                        src={m.image}
+                        src={resolveAsset(m.image)}
                         alt={m.title}
                         loading="lazy"
                         className="h-full w-full object-cover"
