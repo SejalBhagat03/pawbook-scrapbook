@@ -19,7 +19,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "fra
 import confetti from "canvas-confetti";
 
 import { useServerFn } from "@tanstack/react-start";
-import { uploadToBucket } from "@/lib/storage";
+import { uploadToBucket, resolveAsset } from "@/lib/storage";
 import {
   submitFoundFriend,
   uploadGuestPhoto,
@@ -2572,7 +2572,7 @@ export function PetPhoto({
   return (
     <div className={`relative ${className || "h-full w-full"}`}>
       <img
-        src={image}
+        src={resolveAsset(image)}
         alt=""
         className="h-full w-full object-cover"
         style={slug === "coco" ? { objectPosition: "center 25%" } : undefined}

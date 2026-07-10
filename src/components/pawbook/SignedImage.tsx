@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { signedUrlFor } from "@/lib/storage";
+import { signedUrlFor, resolveAsset } from "@/lib/storage";
 
 export function SignedImage({
   storageRef,
@@ -15,9 +15,15 @@ export function SignedImage({
     if (
       storageRef.startsWith("data:") ||
       storageRef.startsWith("blob:") ||
-      storageRef.startsWith("http")
+      storageRef.startsWith("http") ||
+      storageRef.startsWith("/src/assets/") ||
+      storageRef.startsWith("/") ||
+      storageRef.endsWith(".jpg") ||
+      storageRef.endsWith(".jpeg") ||
+      storageRef.endsWith(".png") ||
+      storageRef.endsWith(".webp")
     ) {
-      setUrl(storageRef);
+      setUrl(resolveAsset(storageRef));
       return;
     }
     let cancelled = false;
@@ -40,9 +46,13 @@ export function SignedVideo({ storageRef, className }: { storageRef: string; cla
     if (
       storageRef.startsWith("data:") ||
       storageRef.startsWith("blob:") ||
-      storageRef.startsWith("http")
+      storageRef.startsWith("http") ||
+      storageRef.startsWith("/src/assets/") ||
+      storageRef.startsWith("/") ||
+      storageRef.endsWith(".mp4") ||
+      storageRef.endsWith(".webm")
     ) {
-      setUrl(storageRef);
+      setUrl(resolveAsset(storageRef));
       return;
     }
     let cancelled = false;
