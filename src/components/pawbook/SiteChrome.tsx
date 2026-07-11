@@ -394,9 +394,9 @@ export function PageShell({ children }: { children: ReactNode }) {
           <AnimatePresence mode="wait">
             <motion.div
               key={routerState.location.pathname}
-              initial={{ opacity: 0, y: 18, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -18, filter: "blur(4px)" }}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -18 }}
               transition={{ duration: 0.5, ease: [0.25, 0.8, 0.25, 1] }}
             >
               {children}
