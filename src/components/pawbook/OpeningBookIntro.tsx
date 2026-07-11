@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { playPageFlip } from "@/lib/sound";
 import { motion, AnimatePresence } from "framer-motion";
+import { resolveAsset } from "@/lib/storage";
 
 export function OpeningBookIntro() {
   const [visible, setVisible] = useState(false);
@@ -130,7 +131,7 @@ export function OpeningBookIntro() {
             >
               <div className="bg-cream h-20 w-full overflow-hidden">
                 <img
-                  src="/coco.jpg"
+                  src={resolveAsset("coco.jpg")}
                   alt=""
                   className="object-cover h-full w-full"
                   onError={(e) => {
@@ -152,7 +153,7 @@ export function OpeningBookIntro() {
             >
               <div className="bg-cream h-20 w-full overflow-hidden">
                 <img
-                  src="/kitty.jpg"
+                  src={resolveAsset("kitty.jpg")}
                   alt=""
                   className="object-cover h-full w-full"
                   onError={(e) => {
