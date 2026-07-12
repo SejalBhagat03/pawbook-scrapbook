@@ -21,6 +21,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PawFriendsIndexRouteImport } from './routes/paw-friends.index'
 import { Route as ExploreIndexRouteImport } from './routes/explore.index'
 import { Route as PawFriendsSlugRouteImport } from './routes/paw-friends.$slug'
+import { Route as FoundFriendsIdRouteImport } from './routes/found-friends.$id'
 import { Route as ExploreNatureRouteImport } from './routes/explore.nature'
 import { Route as ExploreMapRouteImport } from './routes/explore.map'
 import { Route as ExploreDiaryRouteImport } from './routes/explore.diary'
@@ -87,6 +88,11 @@ const PawFriendsSlugRoute = PawFriendsSlugRouteImport.update({
   path: '/paw-friends/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FoundFriendsIdRoute = FoundFriendsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => FoundFriendsRoute,
+} as any)
 const ExploreNatureRoute = ExploreNatureRouteImport.update({
   id: '/nature',
   path: '/nature',
@@ -124,7 +130,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/explore': typeof ExploreRouteWithChildren
-  '/found-friends': typeof FoundFriendsRoute
+  '/found-friends': typeof FoundFriendsRouteWithChildren
   '/garden': typeof GardenRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRoute
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/explore/diary': typeof ExploreDiaryRoute
   '/explore/map': typeof ExploreMapRoute
   '/explore/nature': typeof ExploreNatureRoute
+  '/found-friends/$id': typeof FoundFriendsIdRoute
   '/paw-friends/$slug': typeof PawFriendsSlugRoute
   '/explore/': typeof ExploreIndexRoute
   '/paw-friends/': typeof PawFriendsIndexRoute
@@ -142,7 +149,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
-  '/found-friends': typeof FoundFriendsRoute
+  '/found-friends': typeof FoundFriendsRouteWithChildren
   '/garden': typeof GardenRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/explore/diary': typeof ExploreDiaryRoute
   '/explore/map': typeof ExploreMapRoute
   '/explore/nature': typeof ExploreNatureRoute
+  '/found-friends/$id': typeof FoundFriendsIdRoute
   '/paw-friends/$slug': typeof PawFriendsSlugRoute
   '/explore': typeof ExploreIndexRoute
   '/paw-friends': typeof PawFriendsIndexRoute
@@ -163,7 +171,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/explore': typeof ExploreRouteWithChildren
-  '/found-friends': typeof FoundFriendsRoute
+  '/found-friends': typeof FoundFriendsRouteWithChildren
   '/garden': typeof GardenRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/explore/diary': typeof ExploreDiaryRoute
   '/explore/map': typeof ExploreMapRoute
   '/explore/nature': typeof ExploreNatureRoute
+  '/found-friends/$id': typeof FoundFriendsIdRoute
   '/paw-friends/$slug': typeof PawFriendsSlugRoute
   '/explore/': typeof ExploreIndexRoute
   '/paw-friends/': typeof PawFriendsIndexRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/explore/diary'
     | '/explore/map'
     | '/explore/nature'
+    | '/found-friends/$id'
     | '/paw-friends/$slug'
     | '/explore/'
     | '/paw-friends/'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/explore/diary'
     | '/explore/map'
     | '/explore/nature'
+    | '/found-friends/$id'
     | '/paw-friends/$slug'
     | '/explore'
     | '/paw-friends'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/explore/diary'
     | '/explore/map'
     | '/explore/nature'
+    | '/found-friends/$id'
     | '/paw-friends/$slug'
     | '/explore/'
     | '/paw-friends/'
@@ -243,7 +255,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   ExploreRoute: typeof ExploreRouteWithChildren
-  FoundFriendsRoute: typeof FoundFriendsRoute
+  FoundFriendsRoute: typeof FoundFriendsRouteWithChildren
   GardenRoute: typeof GardenRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoriesRoute: typeof StoriesRoute
@@ -337,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PawFriendsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/found-friends/$id': {
+      id: '/found-friends/$id'
+      path: '/$id'
+      fullPath: '/found-friends/$id'
+      preLoaderRoute: typeof FoundFriendsIdRouteImport
+      parentRoute: typeof FoundFriendsRoute
+    }
     '/explore/nature': {
       id: '/explore/nature'
       path: '/nature'
@@ -414,13 +433,25 @@ const ExploreRouteChildren: ExploreRouteChildren = {
 const ExploreRouteWithChildren =
   ExploreRoute._addFileChildren(ExploreRouteChildren)
 
+interface FoundFriendsRouteChildren {
+  FoundFriendsIdRoute: typeof FoundFriendsIdRoute
+}
+
+const FoundFriendsRouteChildren: FoundFriendsRouteChildren = {
+  FoundFriendsIdRoute: FoundFriendsIdRoute,
+}
+
+const FoundFriendsRouteWithChildren = FoundFriendsRoute._addFileChildren(
+  FoundFriendsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   ExploreRoute: ExploreRouteWithChildren,
-  FoundFriendsRoute: FoundFriendsRoute,
+  FoundFriendsRoute: FoundFriendsRouteWithChildren,
   GardenRoute: GardenRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoriesRoute: StoriesRoute,

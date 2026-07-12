@@ -764,15 +764,24 @@ if (typeof window !== "undefined") {
 
 export function useCMS() {
   const [data, setData] = useState({
-    animals,
-    memories,
-    dialogues,
-    quizQuestions,
-    spinRewards,
-    surprises,
+    animals: defaultAnimals,
+    memories: defaultMemories,
+    dialogues: defaultDialogues,
+    quizQuestions: defaultQuizQuestions,
+    spinRewards: defaultSpinRewards,
+    surprises: defaultSurprises,
   });
 
   useEffect(() => {
+    setData({
+      animals,
+      memories,
+      dialogues,
+      quizQuestions,
+      spinRewards,
+      surprises,
+    });
+
     const handleUpdate = () => {
       setData({
         animals,
