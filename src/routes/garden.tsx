@@ -5,10 +5,8 @@ import { PageShell, SectionHeading } from "@/components/pawbook/SiteChrome";
 import { memories, animals } from "@/lib/pawbook-data";
 
 export const Route = createFileRoute("/garden")({
-  beforeLoad: () => {
-    throw redirect({ to: "/", hash: "garden", replace: true });
-  },
-  component: () => null,
+  head: () => ({ meta: [{ title: "Kindness Garden — PawBook" }] }),
+  component: Garden,
 });
 
 function Garden() {

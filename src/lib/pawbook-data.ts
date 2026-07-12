@@ -621,42 +621,51 @@ import { useState, useEffect } from "react";
 // undefined.slice() or undefined.map().
 // ---------------------------------------------------------------------------
 export function normalizeAnimal(raw: Partial<Animal>): Animal {
+  const def = defaultAnimals.find((d) => d.slug === raw.slug);
   return {
     slug: raw.slug ?? "unknown",
-    name: raw.name ?? "Unnamed Friend",
-    emoji: raw.emoji ?? "🐾",
-    nickname: raw.nickname ?? "Street Friend",
-    bio: raw.bio ?? "",
-    story: raw.story ?? "",
-    image: raw.image ?? "",
-    color: raw.color ?? "peach",
-    personality: raw.personality ?? "Friendly",
-    home: raw.home ?? "Unknown Area",
-    favoriteFood: raw.favoriteFood ?? "Whatever is offered 🍪",
-    firstMet: raw.firstMet ?? "Recently",
-    mood: raw.mood ?? "Curious 🌸",
-    status: raw.status ?? "new-friend",
-    stats: raw.stats ?? { pawPrints: 0, treats: 0, memories: 0, adventures: 0 },
-    badges: Array.isArray(raw.badges) ? raw.badges : [],
-    lastSeenLocation: raw.lastSeenLocation ?? "Unknown",
-    lastUpdated: raw.lastUpdated ?? "Recently",
-    pawId: raw.pawId ?? `PB-GUEST-${Date.now()}`,
-    ageEstimate: raw.ageEstimate ?? "Unknown",
-    gender: raw.gender ?? "Unknown",
-    breedType: raw.breedType ?? "Street Dog / Cat",
-    knownSince: raw.knownSince ?? "Recently",
-    homeArea: raw.homeArea ?? "Unknown",
-    vaccinated: raw.vaccinated ?? false,
-    sterilized: raw.sterilized ?? false,
-    medicalNotes: raw.medicalNotes ?? "No medical records yet.",
-    healthRecords: Array.isArray(raw.healthRecords) ? raw.healthRecords : [],
-    friendliness: raw.friendliness ?? 80,
-    energy: raw.energy ?? 70,
-    trust: raw.trust ?? 75,
-    playfulness: raw.playfulness ?? 75,
-    communityLove: raw.communityLove ?? { followers: 0, memories: 0, helpers: 0 },
-    dailyThought: raw.dailyThought ?? raw.story ?? "Just happy to be here 🐾",
-    careTimeline: Array.isArray(raw.careTimeline) ? raw.careTimeline : [],
+    name: raw.name ?? def?.name ?? "Unnamed Friend",
+    emoji: raw.emoji ?? def?.emoji ?? "🐾",
+    nickname: raw.nickname ?? def?.nickname ?? "Street Friend",
+    bio: raw.bio ?? def?.bio ?? "",
+    story: raw.story ?? def?.story ?? "",
+    image: raw.image ?? def?.image ?? "",
+    color: raw.color ?? def?.color ?? "peach",
+    personality: raw.personality ?? def?.personality ?? "Friendly",
+    home: raw.home ?? def?.home ?? "Unknown Area",
+    favoriteFood: raw.favoriteFood ?? def?.favoriteFood ?? "Whatever is offered 🍪",
+    firstMet: raw.firstMet ?? def?.firstMet ?? "Recently",
+    mood: raw.mood ?? def?.mood ?? "Curious 🌸",
+    status: raw.status ?? def?.status ?? "new-friend",
+    stats: raw.stats ?? def?.stats ?? { pawPrints: 0, treats: 0, memories: 0, adventures: 0 },
+    badges: Array.isArray(raw.badges) && raw.badges.length > 0 ? raw.badges : (def?.badges ?? []),
+    lastSeenLocation: raw.lastSeenLocation ?? def?.lastSeenLocation ?? "Unknown",
+    lastUpdated: raw.lastUpdated ?? def?.lastUpdated ?? "Recently",
+    pawId: raw.pawId ?? def?.pawId ?? `PB-GUEST-${Date.now()}`,
+    ageEstimate: raw.ageEstimate ?? def?.ageEstimate ?? "Unknown",
+    gender: raw.gender ?? def?.gender ?? "Unknown",
+    breedType: raw.breedType ?? def?.breedType ?? "Street Dog / Cat",
+    knownSince: raw.knownSince ?? def?.knownSince ?? "Recently",
+    homeArea: raw.homeArea ?? def?.homeArea ?? "Unknown",
+    vaccinated: raw.vaccinated ?? def?.vaccinated ?? false,
+    sterilized: raw.sterilized ?? def?.sterilized ?? false,
+    medicalNotes: raw.medicalNotes ?? def?.medicalNotes ?? "No medical records yet.",
+    healthRecords:
+      Array.isArray(raw.healthRecords) && raw.healthRecords.length > 0
+        ? raw.healthRecords
+        : (def?.healthRecords ?? []),
+    friendliness: raw.friendliness ?? def?.friendliness ?? 80,
+    energy: raw.energy ?? def?.energy ?? 70,
+    trust: raw.trust ?? def?.trust ?? 75,
+    playfulness: raw.playfulness ?? def?.playfulness ?? 75,
+    communityLove:
+      raw.communityLove ?? def?.communityLove ?? { followers: 0, memories: 0, helpers: 0 },
+    dailyThought:
+      raw.dailyThought ?? def?.dailyThought ?? raw.story ?? def?.story ?? "Just happy to be here 🐾",
+    careTimeline:
+      Array.isArray(raw.careTimeline) && raw.careTimeline.length > 0
+        ? raw.careTimeline
+        : (def?.careTimeline ?? []),
   };
 }
 

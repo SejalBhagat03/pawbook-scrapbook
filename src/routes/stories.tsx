@@ -1,14 +1,12 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { PageShell, SectionHeading } from "@/components/pawbook/SiteChrome";
 import { memories, animals, useCMS, updateCMSData } from "@/lib/pawbook-data";
 
 export const Route = createFileRoute("/stories")({
-  beforeLoad: () => {
-    throw redirect({ to: "/", hash: "stories", replace: true });
-  },
-  component: () => null,
+  head: () => ({ meta: [{ title: "Memories — PawBook" }] }),
+  component: StoriesPage,
 });
 
 function StoriesPage() {
@@ -146,8 +144,8 @@ function StoriesPage() {
                       <span className="text-coffee/80">{c.text}</span>
                     </p>
                   ))}
-                  {(m.comments || []).map((c) => (
-                    <p key={c.id} className="text-xs animate-fade-in">
+                  {(m.comments || []).map((c, idx) => (
+                    <p key={c.id || `${c.author}-${idx}`} className="text-xs animate-fade-in">
                       <span className="font-bold">{c.author}:</span>{" "}
                       <span className="text-coffee/80">{c.text}</span>
                       <span className="text-[8px] text-coffee/40 block leading-tight">

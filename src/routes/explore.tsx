@@ -1,11 +1,9 @@
-import { createFileRoute, redirect, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { PageShell } from "@/components/pawbook/SiteChrome";
 
 export const Route = createFileRoute("/explore")({
-  beforeLoad: () => {
-    throw redirect({ to: "/", hash: "explore", replace: true });
-  },
-  component: () => null,
+  head: () => ({ meta: [{ title: "Explore — PawBook" }] }),
+  component: ExploreLayout,
 });
 
 const tabs: { to: string; label: string; icon: string; exact?: boolean }[] = [

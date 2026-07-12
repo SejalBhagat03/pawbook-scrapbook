@@ -13,10 +13,10 @@ import { getPendingSubmissionsCount } from "@/lib/submissions.functions";
 const navLinks = [
   { to: "/", hash: "home", label: "Home" },
   { to: "/", hash: "paw-book", label: "PawBook 🐾" },
-  { to: "/", hash: "stories", label: "Memories 📖" },
-  { to: "/", hash: "explore", label: "PawMap 🗺️" },
+  { to: "/stories", hash: "", label: "Memories 📖" },
+  { to: "/explore/map", hash: "", label: "PawMap 🗺️" },
   { to: "/", hash: "found-friends", label: "Help Board 🚨" },
-  { to: "/", hash: "garden", label: "Kindness Wall ❤️" },
+  { to: "/garden", hash: "", label: "Kindness Wall ❤️" },
   { to: "/pet-studio", hash: "", label: "Studio ⚙️" },
 ] as const;
 
@@ -105,7 +105,7 @@ export function TopNav() {
             const active = pathname === "/" ? activeSection === l.hash : false;
             return (
               <Link
-                key={l.hash}
+                key={l.label}
                 to={l.to}
                 hash={l.hash}
                 onClick={(e) => handleNavClick(e, l.to, l.hash)}
@@ -163,7 +163,7 @@ export function TopNav() {
               const active = pathname === "/" ? activeSection === l.hash : false;
               return (
                 <Link
-                  key={l.hash}
+                  key={l.label}
                   to={l.to}
                   hash={l.hash}
                   onClick={(e) => {
@@ -459,13 +459,13 @@ export function SiteFooter() {
             <Link to="/" hash="paw-friends" className="hover:text-peach">
               Paw Friends
             </Link>
-            <Link to="/" hash="stories" className="hover:text-peach">
+            <Link to="/stories" className="hover:text-peach">
               Stories
             </Link>
-            <Link to="/" hash="garden" className="hover:text-peach">
+            <Link to="/garden" className="hover:text-peach">
               Kindness Garden
             </Link>
-            <Link to="/" hash="explore" className="hover:text-peach">
+            <Link to="/explore/map" className="hover:text-peach">
               Paw World Map
             </Link>
           </div>

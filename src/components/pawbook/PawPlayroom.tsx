@@ -1,8 +1,89 @@
+import { useState, useEffect } from "react";
 import type { Animal } from "@/lib/pawbook-data";
 import { resolveAsset } from "@/lib/storage";
 import { SpinWheel } from "@/components/pawbook/SpinWheel";
 import { SectionHeading } from "@/components/pawbook/SiteChrome";
 import { toast } from "sonner";
+
+const PET_PROMPTS: Record<
+  string,
+  {
+    greeting: string;
+    prompts: { text: string; reply: string; toastMsg: string }[];
+  }
+> = {
+  coco: {
+    greeting:
+      "Hey human! Did you bring birthday cookies? 👀 I might look big like a tiger but I love hugs!",
+    prompts: [
+      {
+        text: "Offer Birthday Treat 🍖",
+        reply:
+          "Munch munch... Oh, you are the best! My tail is wagging at maximum speed. Let's go play in the garden! 🌳🍖",
+        toastMsg: "You fed Coco a birthday treat! 🍖",
+      },
+      {
+        text: "Tell him he looks like a tiger 🐯",
+        reply:
+          "Haha, yes! Everyone says I look like a tiger, but I'm just a big friendly puppy at heart. 🐯❤️",
+        toastMsg: "Coco wags his tail happily!",
+      },
+    ],
+  },
+  moti: {
+    greeting: "Belly rub time? I'm ready! 🐶 The corner near the tea stall is warm today.",
+    prompts: [
+      {
+        text: "Give belly rubs ❤️",
+        reply:
+          "Aaaah, that's the spot. My hind leg is twitching. You are officially my favorite human today! 🥺🐾",
+        toastMsg: "Moti is melting from rubs! ❤️",
+      },
+      {
+        text: "Offer warm milk 🥛",
+        reply:
+          "Slurp slurp slurp... Warm tummy feels so cozy! Now I'm ready to watch over the street corner again! 🥛🐶",
+        toastMsg: "Moti drinks warm milk! 🥛",
+      },
+    ],
+  },
+  kitty: {
+    greeting:
+      "I have selected you as my servant today. 😼 Ask me something, or just stand there in awe.",
+    prompts: [
+      {
+        text: "Pet gently 🐾",
+        reply:
+          "Hiss! Just kidding... Purr purr purr. You may rub behind my left ear once. Do not push your luck, servant! 🐈👑",
+        toastMsg: "Kitty accepts your scratches.",
+      },
+      {
+        text: "Ask for wisdom 🔮",
+        reply:
+          "The sunbeams are round and the rooftops are high. Life is simple: if you see a box, sit in it. Also, give me fish. 🐟",
+        toastMsg: "Kitty shares feline wisdom.",
+      },
+    ],
+  },
+  tommy: {
+    greeting:
+      "Let's go! What are we chasing today? 🎾 A leaf? A butterfly? I have maximum energy!",
+    prompts: [
+      {
+        text: "Throw tennis ball 🎾",
+        reply:
+          "Sprints! Sprints! I got it! *drops wet ball on your lap* Throw it again! Please please please! 🐕⚡🎾",
+        toastMsg: "Tommy fetches the ball! 🎾",
+      },
+      {
+        text: "Offer warm scarf 🧣",
+        reply:
+          "Wears scarf proudly! Look at me, I'm the most stylish puppy in this village. Let's run in the rain! 🧣✨",
+        toastMsg: "Tommy wears your scarf! 🧣",
+      },
+    ],
+  },
+};
 
 interface PawPlayroomProps {
   featured: Animal;
@@ -26,6 +107,33 @@ export function PawPlayroom({
   setQuizOpen,
   activePlayroomIndex,
 }: PawPlayroomProps) {
+  const [messages, setMessages] = useState<{ text: string; sender: "pet" | "user" }[]>([]);
+
+  const getPetPromptConfig = (slug: string) => {
+    return (
+      PET_PROMPTS[slug.toLowerCase()] ?? {
+        greeting: `Hello friend! I'm so happy to meet you here in PawBook. 🐾`,
+        prompts: [
+          {
+            text: "Send online hugs 🤗",
+            reply: `Aww, thank you! Sending you a warm, soft headbutt back! 💖🐾`,
+            toastMsg: "Hugs sent successfully! 🤗",
+          },
+          {
+            text: "Offer treats 🍪",
+            reply: `Sniff sniff... Crunchy! That was delicious, thank you kind human! 🐶🍪`,
+            toastMsg: "Treat offered! 🍪",
+          },
+        ],
+      }
+    );
+  };
+
+  useEffect(() => {
+    const config = getPetPromptConfig(featured.slug);
+    setMessages([{ text: config.greeting, sender: "pet" }]);
+  }, [featured.slug]);
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-12 border-t border-b border-coffee/5 bg-cream/10 rounded-3xl mb-16">
       <SectionHeading
@@ -57,7 +165,7 @@ export function PawPlayroom({
               </div>
               <div>
                 <p className="text-xs font-bold text-coffee flex items-center gap-1">
-                  {a.name} {a.emoji}{" "}
+                   {a.name} {a.emoji}{" "}
                   <span className="text-[9px] text-coffee/40 font-normal">
                     · {a.lastUpdated}
                   </span>
@@ -76,42 +184,82 @@ export function PawPlayroom({
         onScroll={handlePlayroomScroll}
         className="mt-4 flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory no-scrollbar md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-x-visible md:pb-0 items-start"
       >
-        {/* Daily Thoughts Card */}
+        {/* Cozy Chat Card */}
         <div
           className="w-[85vw] sm:w-[360px] md:w-auto shrink-0 snap-center bg-white rounded-3xl p-6 border border-coffee/10 scrapbook-shadow h-[545px] flex flex-col justify-between overflow-hidden animate-[fade-up_0.5s_ease-out_both]"
           style={{ animationDelay: "100ms" }}
         >
           <div className="text-center w-full">
-            <span className="text-4xl block my-2">📝</span>
-            <h3 className="font-display text-2xl mb-1 text-coffee">Daily Thoughts</h3>
-            <p className="text-xs text-coffee/60 mb-4 max-w-xs mx-auto">
-              What is on {featured.name}'s mind today?
+            <span className="text-4xl block my-2">💬</span>
+            <h3 className="font-display text-2xl mb-1 text-coffee">Cozy Chat</h3>
+            <p className="text-xs text-coffee/60 mb-3 max-w-xs mx-auto">
+              Have a little conversation with {featured.name}!
             </p>
           </div>
-          <div className="flex-1 flex items-center justify-center p-3 my-2 relative">
-            {/* Cozy Post-It Sticky note */}
-            <div className="bg-[#fefae0] border border-coffee/10 p-5 rounded-2xl -rotate-2 scrapbook-shadow text-center max-w-[280px] relative">
-              <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-12 h-3.5 bg-peach/30 border border-coffee/5" />
-              <p className="font-hand text-base text-coffee/95 leading-relaxed">
-                "
-                {featured.dailyThought ||
-                  `Today my friends visited again. The treats were nice, but the head pats were better ❤️`}
-                "
-              </p>
-              <div className="text-[9px] text-coffee/50 font-bold uppercase mt-4">
-                — {featured.name} {featured.emoji}
+
+          {/* Chat dialog logs */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-cream/20 rounded-2xl border border-coffee/5 scrollbar-none my-2 flex flex-col justify-start">
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={
+                  "flex items-end gap-1.5 max-w-[90%] " +
+                  (msg.sender === "user" ? "ml-auto flex-row-reverse" : "")
+                }
+              >
+                {msg.sender === "pet" && (
+                  <div className="size-6 rounded-full overflow-hidden shrink-0 border border-coffee/15 bg-white">
+                    <img
+                      src={resolveAsset(featured.image)}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
+                <div
+                  className={
+                    "rounded-2xl p-2.5 text-xs leading-relaxed " +
+                    (msg.sender === "user"
+                      ? "bg-coffee text-cream rounded-br-none font-bold"
+                      : "bg-white text-coffee rounded-bl-none border border-coffee/5 shadow-3xs")
+                  }
+                >
+                  {msg.text}
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-          <button
-            onClick={(e) => {
-              handleAction("thought-love", "Boop", featured.name, e);
-              toast.success(`You sent a heart to ${featured.name}! ❤️`);
-            }}
-            className="squish w-full rounded-2xl bg-peach py-3 text-sm font-bold text-coffee border border-coffee/5 scrapbook-shadow cursor-pointer mt-auto"
-          >
-            Send a Heart ❤️🐾
-          </button>
+
+          {/* Action buttons */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {getPetPromptConfig(featured.slug).prompts.map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setMessages((prev) => [
+                      ...prev,
+                      { text: p.text, sender: "user" },
+                      { text: p.reply, sender: "pet" },
+                    ]);
+                    toast.success(p.toastMsg);
+                  }}
+                  className="rounded-xl border-2 border-coffee/25 bg-white hover:bg-peach/10 px-2.5 py-1.5 text-[10px] font-bold text-coffee cursor-pointer transition active:scale-95 shadow-sm"
+                >
+                  💬 {p.text}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                const config = getPetPromptConfig(featured.slug);
+                setMessages([{ text: config.greeting, sender: "pet" }]);
+              }}
+              className="block w-full text-center text-[9px] font-bold text-coffee/40 hover:text-peach transition cursor-pointer"
+            >
+              Restart Chat 🔄
+            </button>
+          </div>
         </div>
 
         {/* Care Reminders Card */}
@@ -127,41 +275,44 @@ export function PawPlayroom({
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-3 my-2 pr-1 text-left scrollbar-none">
-            {animals.map((a) => {
-              const dueReminders = (a.healthRecords || []).map((r, i) => ({
-                id: `${a.slug}-rem-${i}`,
-                petName: a.name,
-                emoji: a.emoji,
-                type:
-                  r.type === "Vaccination"
-                    ? "💉"
-                    : r.type === "Checkup"
-                      ? "🏥"
-                      : r.type === "Medicine"
-                        ? "💊"
-                        : "🩹",
-                label: `${a.name}'s ${r.type}`,
-                note: r.note,
-                dueDate: r.date,
-              }));
-
-              return dueReminders.slice(0, 1).map((rem) => (
+          <div className="flex-1 overflow-y-auto space-y-3 my-2 pr-1 text-left scrollbar-none flex flex-col justify-start">
+            {(featured.healthRecords || []).map((r, i) => {
+              const icon =
+                r.type === "Vaccination"
+                  ? "💉"
+                  : r.type === "Checkup"
+                    ? "🏥"
+                    : r.type === "Medicine"
+                      ? "💊"
+                      : "🩹";
+              return (
                 <div
-                  key={rem.id}
+                  key={`${featured.slug}-rem-${i}`}
                   className="bg-cream/40 border border-coffee/5 p-3 rounded-2xl flex gap-3 items-start shadow-3xs animate-fade-in"
                 >
-                  <span className="text-lg mt-0.5">{rem.type}</span>
+                  <span className="text-lg mt-0.5">{icon}</span>
                   <div>
-                    <p className="text-xs font-bold text-coffee">{rem.label}</p>
-                    <p className="text-[10px] text-coffee/70">{rem.note}</p>
+                    <p className="text-xs font-bold text-coffee">
+                      {featured.name}'s {r.type}
+                    </p>
+                    <p className="text-[10px] text-coffee/70">{r.note}</p>
                     <p className="text-[9px] text-peach font-bold uppercase mt-1">
-                      Due Date: {rem.dueDate}
+                      Due Date: {r.date}
                     </p>
                   </div>
                 </div>
-              ));
+              );
             })}
+
+            {(!featured.healthRecords || featured.healthRecords.length === 0) && (
+              <div className="flex flex-col items-center justify-center flex-1 text-center py-8 px-4">
+                <span className="text-4xl mb-3 animate-pulse">💖</span>
+                <p className="text-sm font-bold text-coffee">{featured.name} is all caught up!</p>
+                <p className="text-xs text-coffee/50 mt-1 max-w-[200px]">
+                  No upcoming vet visits or vaccinations scheduled.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="bg-cream/40 border border-coffee/5 rounded-2xl p-2.5 text-center text-[9px] text-coffee/50 mt-auto">

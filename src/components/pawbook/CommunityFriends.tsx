@@ -7,10 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { SignedImage, SignedVideo } from "@/components/pawbook/SignedImage";
-import {
-  submitGuestFriend,
-  uploadGuestPhoto,
-} from "@/lib/submissions.functions";
+import { submitGuestFriend, uploadGuestPhoto } from "@/lib/submissions.functions";
 import { SectionHeading } from "@/components/pawbook/SiteChrome";
 import { resolveAsset } from "@/lib/storage";
 import type { Database } from "@/integrations/supabase/types";
@@ -58,6 +55,38 @@ function SubmitForm({ user }: { user: User | null }) {
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("Dog");
+
+  const CUTE_NAMES = [
+    "Buddy",
+    "Moti",
+    "Lucy",
+    "Sheru",
+    "Rocky",
+    "Luna",
+    "Coco",
+    "Kalu",
+    "Chiku",
+    "Cookie",
+    "Tommy",
+    "Kitty",
+    "Simba",
+    "Bella",
+    "Goldy",
+    "Bruno",
+    "Milo",
+    "Ginger",
+  ];
+
+  const handleSuggestName = () => {
+    const randomName = CUTE_NAMES[Math.floor(Math.random() * CUTE_NAMES.length)];
+    setName(randomName);
+    toast.success(`How about "${randomName}"? ✨`);
+  };
+
+  const handleNoName = () => {
+    setName(`Unknown ${species}`);
+    toast.info(`Set name to "Unknown ${species}" 🐾`);
+  };
   const [location, setLocation] = useState("");
   const [story, setStory] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -79,7 +108,7 @@ function SubmitForm({ user }: { user: User | null }) {
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -218,63 +247,131 @@ function SubmitForm({ user }: { user: User | null }) {
     );
   }
 
+  const tagStyles: Record<
+    string,
+    {
+      bgActive: string;
+      textActive: string;
+      borderActive: string;
+      bgInactive: string;
+      borderInactive: string;
+    }
+  > = {
+    Friendly: {
+      bgActive: "bg-[#ffd166]",
+      textActive: "text-coffee",
+      borderActive: "border-coffee",
+      bgInactive: "bg-[#ffd166]/15",
+      borderInactive: "border-[#ffd166]/30",
+    },
+    "Food Lover": {
+      bgActive: "bg-[#f2a65a]",
+      textActive: "text-coffee",
+      borderActive: "border-coffee",
+      bgInactive: "bg-[#f2a65a]/15",
+      borderInactive: "border-[#f2a65a]/30",
+    },
+    Playful: {
+      bgActive: "bg-[#a8dadc]",
+      textActive: "text-coffee",
+      borderActive: "border-coffee",
+      bgInactive: "bg-[#a8dadc]/20",
+      borderInactive: "border-[#a8dadc]/40",
+    },
+    Sleepy: {
+      bgActive: "bg-[#b7b7a4]",
+      textActive: "text-coffee",
+      borderActive: "border-coffee",
+      bgInactive: "bg-[#b7b7a4]/20",
+      borderInactive: "border-[#b7b7a4]/40",
+    },
+    Shy: {
+      bgActive: "bg-[#e0b1cb]",
+      textActive: "text-coffee",
+      borderActive: "border-coffee",
+      bgInactive: "bg-[#e0b1cb]/20",
+      borderInactive: "border-[#e0b1cb]/40",
+    },
+    "Needs Care": {
+      bgActive: "bg-[#ffb5a7]",
+      textActive: "text-[#b7094c]",
+      borderActive: "border-[#b7094c]",
+      bgInactive: "bg-[#ffb5a7]/20",
+      borderInactive: "border-[#ffb5a7]/40",
+    },
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-4xl space-y-6">
-      <div className="rounded-3xl bg-linear-to-br from-peach/30 via-yellow/20 to-sage/20 border border-coffee/10 p-5 sm:p-6 text-center relative overflow-hidden scrapbook-shadow">
-        <div className="absolute top-2 left-4 text-2xl opacity-15 -rotate-12 select-none">🐾</div>
-        <div className="absolute bottom-2 right-4 text-2xl opacity-15 rotate-12 select-none">
-          🐾
-        </div>
-        <h3 className="font-display text-xl sm:text-2xl font-bold text-coffee">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
+      {/* Header */}
+      <div className="rounded-2xl bg-linear-to-br from-peach/30 via-yellow/20 to-sage/20 border-2 border-coffee/15 p-4 sm:p-6 text-center relative overflow-hidden scrapbook-shadow mb-6">
+        <div className="absolute top-2 left-4 text-xl opacity-15 -rotate-12 select-none">🐾</div>
+        <div className="absolute bottom-2 right-4 text-xl opacity-15 rotate-12 select-none">🐾</div>
+        <h3 className="font-display text-lg sm:text-2xl font-bold text-coffee">
           Add Your Animal to PawBook 🐾
         </h3>
-        <p className="mt-1 text-xs text-coffee/60 max-w-md mx-auto">
-          Share a photo, location, and story. No registration needed! Anyone can add an animal
-          friend.
+        <p className="mt-1 text-[11px] sm:text-xs text-coffee/70 max-w-md mx-auto font-medium">
+          Share a photo, location, and story. No registration needed!
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5 items-start">
-        <div className="lg:col-span-3 rounded-3xl border border-coffee/10 bg-white scrapbook-shadow p-5 sm:p-6 space-y-4">
+        {/* Form */}
+        <div className="lg:col-span-3 rounded-2xl border-2 border-coffee/10 bg-white scrapbook-shadow p-5 sm:p-6 space-y-5">
+          {/* Photo upload */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
-              1. Animal Photo (Required)
-            </label>
-            <label className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-coffee/20 hover:border-peach/60 hover:bg-peach/5 cursor-pointer p-4 min-h-[120px] transition-all relative">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="flex items-center justify-center size-5 rounded-full bg-coffee text-cream text-[10px] font-black">
+                1
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee">
+                Animal Photo
+              </span>
+              <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold ml-auto">
+                Required
+              </span>
+            </div>
+            <label
+              className={`flex items-center gap-3 rounded-xl border-2 border-dashed cursor-pointer p-4 transition-all relative ${
+                photoPreview
+                  ? "border-sage bg-sage/5"
+                  : "border-coffee/30 bg-cream/10 hover:border-peach hover:bg-peach/5"
+              }`}
+            >
               {uploadProgress && (
-                <div className="absolute inset-0 bg-white/80 z-20 flex flex-col items-center justify-center">
-                  <span className="animate-spin text-3xl mb-1">🐾</span>
-                  <span className="text-[10px] font-bold text-coffee/60 uppercase">
-                    Processing photo...
+                <div className="absolute inset-0 bg-white/80 z-20 rounded-xl flex flex-col items-center justify-center">
+                  <span className="animate-spin text-2xl mb-1">🐾</span>
+                  <span className="text-[10px] font-bold text-coffee/70 uppercase">
+                    Processing…
                   </span>
                 </div>
               )}
               {photoPreview ? (
-                <div className="flex items-center gap-3 w-full">
+                <>
                   <img
                     src={photoPreview}
                     alt=""
-                    className="size-16 object-cover rounded-lg border border-coffee/10"
+                    className="size-14 object-cover rounded-lg border-2 border-coffee/15 shrink-0"
                   />
-                  <div className="text-left">
-                    <p className="text-xs font-bold text-coffee truncate max-w-[180px]">
-                      {photo?.name}
-                    </p>
-                    <p className="text-[10px] text-coffee/50">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-coffee truncate">{photo?.name}</p>
+                    <p className="text-[10px] text-coffee/60 font-semibold">
                       {(photo?.size ?? 0) / 1024 > 1024
                         ? `${((photo?.size ?? 0) / 1024 / 1024).toFixed(1)} MB`
                         : `${((photo?.size ?? 0) / 1024).toFixed(0)} KB`}
                     </p>
-                    <span className="text-[9px] text-peach font-bold uppercase tracking-wide mt-1 block">
-                      Click to change
+                    <span className="text-[9px] text-peach font-bold uppercase tracking-wide mt-0.5 block">
+                      Tap to change
                     </span>
                   </div>
-                </div>
+                </>
               ) : (
-                <div className="text-center space-y-1">
-                  <span className="text-3xl">🖼️</span>
-                  <p className="text-xs font-bold text-coffee/70">Click to choose image</p>
-                  <p className="text-[9px] text-coffee/40">PNG, JPG, WEBP supported</p>
+                <div className="flex items-center gap-4 w-full py-1">
+                  <span className="text-3xl filter drop-shadow-xs">🖼️</span>
+                  <div>
+                    <p className="text-xs font-bold text-coffee/95">Tap to choose a photo</p>
+                    <p className="text-[10px] text-coffee/60 font-medium">PNG, JPG, WEBP formats</p>
+                  </div>
                 </div>
               )}
               <input
@@ -287,64 +384,107 @@ function SubmitForm({ user }: { user: User | null }) {
             </label>
           </div>
 
+          {/* Name */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
-              2. Animal Name
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="flex items-center justify-center size-5 rounded-full bg-coffee text-cream text-[10px] font-black">
+                2
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee">
+                Animal Name
+              </span>
+            </div>
             <input
               type="text"
               maxLength={80}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Do they have a name?"
-              className="w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-xs outline-none focus:border-peach"
+              placeholder="e.g. Tommy, Street Dog #1, or leave blank"
+              className="w-full rounded-xl border-2 border-coffee/25 bg-white px-3 py-2.5 text-xs text-coffee outline-none focus:border-peach focus:ring-2 focus:ring-peach/20 transition-all placeholder:text-coffee/40"
             />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <button
+                type="button"
+                onClick={handleSuggestName}
+                className="text-[10px] font-bold text-coffee bg-[#fffdf9] hover:bg-peach/10 border-2 border-coffee/30 hover:border-coffee px-3 py-1.5 rounded-lg cursor-pointer transition-all active:scale-95 flex items-center gap-1 shadow-xs"
+              >
+                ✨ Suggest a Name
+              </button>
+              <button
+                type="button"
+                onClick={handleNoName}
+                className="text-[10px] font-bold text-coffee bg-[#fffdf9] hover:bg-peach/10 border-2 border-coffee/30 hover:border-coffee px-3 py-1.5 rounded-lg cursor-pointer transition-all active:scale-95 flex items-center gap-1 shadow-xs"
+              >
+                🐾 Don't have a name
+              </button>
+            </div>
           </div>
 
+          {/* Animal Type — emoji + full text labels */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
-              3. Animal Type
-            </label>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="flex items-center justify-center size-5 rounded-full bg-coffee text-cream text-[10px] font-black">
+                3
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee">
+                Animal Type
+              </span>
+            </div>
             <div className="grid grid-cols-4 gap-2">
               {SPECIES_OPTIONS.map((s) => (
                 <button
                   key={s.label}
                   type="button"
                   onClick={() => setSpecies(s.label)}
-                  className={`flex flex-col items-center gap-1 py-2 rounded-xl border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+                  className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 text-[11px] font-bold transition-all cursor-pointer hover:scale-105 active:scale-95 ${
                     species === s.label
-                      ? "border-peach bg-peach/10 font-bold scale-105"
-                      : "border-coffee/10 bg-cream/20 hover:border-coffee/20"
+                      ? "border-coffee bg-coffee text-cream shadow-sm"
+                      : "border-coffee/20 bg-cream/10 text-coffee/80 hover:border-coffee/40 hover:bg-cream/30"
                   }`}
                 >
-                  <span className="text-2xl">{s.emoji}</span>
-                  <span className="text-[10px] text-coffee">{s.label}</span>
+                  <span className="text-xl">{s.emoji}</span>
+                  <span>{s.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Location */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
-              4. Location Seen (Optional)
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="flex items-center justify-center size-5 rounded-full bg-coffee text-cream text-[10px] font-black">
+                4
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee">
+                Where Seen?
+              </span>
+              <span className="text-[9px] bg-coffee/5 text-coffee/60 px-2 py-0.5 rounded-full font-bold ml-auto">
+                Optional
+              </span>
+            </div>
             <input
               type="text"
               maxLength={120}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Where did you meet them?"
-              className="w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-xs outline-none focus:border-peach"
+              placeholder="Near college gate, park, street corner…"
+              className="w-full rounded-xl border-2 border-coffee/25 bg-white px-3 py-2.5 text-xs text-coffee outline-none focus:border-peach focus:ring-2 focus:ring-peach/20 transition-all placeholder:text-coffee/40"
             />
-            <p className="text-[9px] text-coffee/40 mt-1 italic">
-              Examples: Near college gate, Garden area, Street corner
-            </p>
           </div>
 
+          {/* Story */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-1">
-              5. Small Story / Memory
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="flex items-center justify-center size-5 rounded-full bg-coffee text-cream text-[10px] font-black">
+                5
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee">
+                Their Story
+              </span>
+              <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold ml-auto">
+                Required
+              </span>
+            </div>
             <textarea
               required
               minLength={10}
@@ -352,30 +492,43 @@ function SubmitForm({ user }: { user: User | null }) {
               rows={3}
               value={story}
               onChange={(e) => setStory(e.target.value)}
-              placeholder="Tell their little story..."
-              className="w-full rounded-xl border border-coffee/15 bg-cream/40 px-3 py-2 text-xs outline-none focus:border-peach resize-none"
+              placeholder="Tell their little story…"
+              className="w-full rounded-xl border-2 border-coffee/25 bg-white px-3 py-2.5 text-xs text-coffee outline-none focus:border-peach focus:ring-2 focus:ring-peach/20 transition-all resize-none placeholder:text-coffee/40"
             />
-            <p className="text-[9px] text-coffee/40 mt-0.5 italic">
-              Example: "This little friend waits near my home every morning 💛"
+            <p className="text-[10px] text-coffee/60 mt-1.5 italic font-semibold">
+              e.g. "This little friend waits near my home every morning 💛"
             </p>
           </div>
 
+          {/* Personality tags */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-coffee/60 block mb-2">
-              6. Personality Tags
-            </label>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="flex items-center justify-center size-5 rounded-full bg-coffee text-cream text-[10px] font-black">
+                6
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee">
+                Personality Tags
+              </span>
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {PERSONALITY_TAGS.map((t) => {
                 const active = selectedTags.includes(t.label);
+                const styles = tagStyles[t.label] || {
+                  bgActive: "bg-coffee",
+                  textActive: "text-cream",
+                  borderActive: "border-coffee",
+                  bgInactive: "bg-white",
+                  borderInactive: "border-coffee/20",
+                };
                 return (
                   <button
                     key={t.label}
                     type="button"
                     onClick={() => toggleTag(t.label)}
-                    className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold cursor-pointer transition-all ${
+                    className={`flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-[11px] font-bold cursor-pointer transition-all ${
                       active
-                        ? "border-coffee bg-coffee text-cream scale-105"
-                        : "border-coffee/10 bg-white text-coffee hover:border-coffee/30"
+                        ? `${styles.bgActive} ${styles.textActive} ${styles.borderActive} shadow-sm scale-105`
+                        : `${styles.bgInactive} ${styles.borderInactive} text-coffee/85 hover:border-coffee/50 hover:bg-cream/10`
                     }`}
                   >
                     <span>{t.emoji}</span> {t.label}
@@ -385,35 +538,36 @@ function SubmitForm({ user }: { user: User | null }) {
             </div>
           </div>
 
-          <div className="pt-2 border-t border-coffee/5">
-            <label className="flex items-start gap-2 text-xs text-coffee/70 cursor-pointer select-none">
+          {/* Promise + Submit */}
+          <div className="pt-4 border-t-2 border-coffee/10 space-y-3">
+            <label className="flex items-start gap-2.5 text-xs font-semibold text-coffee/85 cursor-pointer select-none">
               <input
                 required
                 type="checkbox"
                 checked={promiseChecked}
                 onChange={(e) => setPromiseChecked(e.target.checked)}
-                className="mt-0.5 rounded accent-coffee cursor-pointer"
+                className="mt-0.5 rounded accent-coffee size-4 cursor-pointer"
               />
               <span>I promise this is a real animal memory 🐾</span>
             </label>
+            <button
+              type="submit"
+              disabled={busy || !promiseChecked || !photo}
+              className="w-full rounded-xl bg-coffee border-2 border-coffee py-3 text-sm font-bold text-cream hover:bg-white hover:text-coffee disabled:opacity-40 cursor-pointer transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2"
+            >
+              {busy ? (
+                <>
+                  <span className="animate-spin text-base">🐾</span> Sharing Story…
+                </>
+              ) : (
+                <>Add Their Story To PawBook 🐾</>
+              )}
+            </button>
           </div>
-
-          <button
-            type="submit"
-            disabled={busy || !promiseChecked || !photo}
-            className="w-full rounded-full bg-coffee py-3 text-sm font-bold text-cream hover:bg-coffee/90 disabled:opacity-40 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
-          >
-            {busy ? (
-              <>
-                <span className="animate-spin text-base">🐾</span> Sharing Story…
-              </>
-            ) : (
-              <>Add Their Story To PawBook 🐾</>
-            )}
-          </button>
         </div>
 
-        <div className="lg:col-span-2 sticky top-24">
+        {/* Live preview — hidden on mobile, shown on desktop */}
+        <div className="lg:col-span-2 sticky top-24 hidden lg:block">
           <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/40 mb-3 text-center">
             Live Preview
           </p>
@@ -449,7 +603,6 @@ function SubmitForm({ user }: { user: User | null }) {
               {location.trim() && (
                 <p className="text-[9px] text-coffee/50 font-semibold truncate">📍 {location}</p>
               )}
-
               {selectedTags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {selectedTags.map((t) => (
@@ -462,7 +615,6 @@ function SubmitForm({ user }: { user: User | null }) {
                   ))}
                 </div>
               )}
-
               {story.trim() && (
                 <p className="text-coffee/70 font-hand text-xs leading-relaxed line-clamp-3 italic">
                   "{story}"
@@ -470,7 +622,6 @@ function SubmitForm({ user }: { user: User | null }) {
               )}
             </div>
           </motion.div>
-
           <p className="text-[9px] text-coffee/30 text-center mt-3 italic">
             This is how the profile card will look
           </p>
@@ -520,9 +671,7 @@ export function CommunityFriends({
         action={
           <button
             onClick={() => {
-              document
-                .getElementById("share-friend-form")
-                ?.scrollIntoView({ behavior: "smooth" });
+              document.getElementById("share-friend-form")?.scrollIntoView({ behavior: "smooth" });
             }}
             className="rounded-full bg-peach px-5 py-2 text-sm font-bold text-coffee hover:scale-105 cursor-pointer animate-pulse"
           >
@@ -536,30 +685,46 @@ export function CommunityFriends({
       </p>
 
       {/* Species filter pills */}
-      {allSubmissions.length > 0 && (() => {
-        const speciesOptions = ["all", ...Array.from(new Set(allSubmissions.map(r => r.species?.toLowerCase() || "other")))];
-        return (
-          <div className="mt-6 flex flex-wrap gap-2 items-center">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-coffee/50 mr-1">Filter:</span>
-            {speciesOptions.map(sp => (
-              <button
-                key={sp}
-                onClick={() => { setSpeciesFilter(sp); setVisibleCount(CARDS_PER_PAGE); }}
-                className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all cursor-pointer border ${
-                  speciesFilter === sp
-                    ? "bg-coffee text-cream border-coffee"
-                    : "bg-white text-coffee/70 border-coffee/15 hover:bg-cream"
-                }`}
-              >
-                {sp === "all" ? "🐾 All" : sp.charAt(0).toUpperCase() + sp.slice(1)}
-              </button>
-            ))}
-            <span className="ml-auto text-[11px] font-bold text-coffee/40">
-              {allSubmissions.filter(r => speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter).length} friends added
-            </span>
-          </div>
-        );
-      })()}
+      {allSubmissions.length > 0 &&
+        (() => {
+          const speciesOptions = [
+            "all",
+            ...Array.from(new Set(allSubmissions.map((r) => r.species?.toLowerCase() || "other"))),
+          ];
+          return (
+            <div className="mt-6 flex flex-wrap gap-2 items-center">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-coffee/50 mr-1">
+                Filter:
+              </span>
+              {speciesOptions.map((sp) => (
+                <button
+                  key={sp}
+                  onClick={() => {
+                    setSpeciesFilter(sp);
+                    setVisibleCount(CARDS_PER_PAGE);
+                  }}
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold transition-all cursor-pointer border ${
+                    speciesFilter === sp
+                      ? "bg-coffee text-cream border-coffee"
+                      : "bg-white text-coffee/70 border-coffee/15 hover:bg-cream"
+                  }`}
+                >
+                  {sp === "all" ? "🐾 All" : sp.charAt(0).toUpperCase() + sp.slice(1)}
+                </button>
+              ))}
+              <span className="ml-auto text-[11px] font-bold text-coffee/40">
+                {
+                  allSubmissions.filter(
+                    (r) =>
+                      speciesFilter === "all" ||
+                      (r.species?.toLowerCase() || "other") === speciesFilter,
+                  ).length
+                }{" "}
+                friends added
+              </span>
+            </div>
+          );
+        })()}
 
       <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 bg-[#e6ccb2]/20 border-4 border-dashed border-[#7f5539] rounded-3xl p-6 relative">
         {allSubmissions.length === 0 && (
@@ -568,7 +733,10 @@ export function CommunityFriends({
           </div>
         )}
         {allSubmissions
-          .filter(r => speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter)
+          .filter(
+            (r) =>
+              speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter,
+          )
           .slice(0, visibleCount)
           .map((r, i) => {
             const isLocal = "isLocal" in r && (r as { isLocal: boolean }).isLocal;
@@ -697,31 +865,53 @@ export function CommunityFriends({
           })}
 
         {/* Load more button */}
-        {allSubmissions.filter(r => speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter).length > visibleCount && (
+        {allSubmissions.filter(
+          (r) => speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter,
+        ).length > visibleCount && (
           <div className="col-span-full flex flex-col items-center gap-2 pt-2">
             <button
-              onClick={() => setVisibleCount(v => v + CARDS_PER_PAGE)}
+              onClick={() => setVisibleCount((v) => v + CARDS_PER_PAGE)}
               className="squish rounded-2xl bg-coffee/10 px-8 py-3 text-sm font-bold text-coffee hover:bg-coffee/20 border border-coffee/10 cursor-pointer transition-colors"
             >
               🐾 Load More Friends
             </button>
             <p className="text-[10px] text-coffee/40">
-              Showing {Math.min(visibleCount, allSubmissions.filter(r => speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter).length)} of {allSubmissions.filter(r => speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter).length}
+              Showing{" "}
+              {Math.min(
+                visibleCount,
+                allSubmissions.filter(
+                  (r) =>
+                    speciesFilter === "all" ||
+                    (r.species?.toLowerCase() || "other") === speciesFilter,
+                ).length,
+              )}{" "}
+              of{" "}
+              {
+                allSubmissions.filter(
+                  (r) =>
+                    speciesFilter === "all" ||
+                    (r.species?.toLowerCase() || "other") === speciesFilter,
+                ).length
+              }
             </p>
           </div>
         )}
 
         {/* Collapse button — shown when expanded beyond first page */}
-        {visibleCount > CARDS_PER_PAGE && allSubmissions.filter(r => speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter).length <= visibleCount && (
-          <div className="col-span-full flex justify-center pt-2">
-            <button
-              onClick={() => setVisibleCount(CARDS_PER_PAGE)}
-              className="squish rounded-2xl bg-coffee/5 px-8 py-2 text-xs font-bold text-coffee/50 hover:bg-coffee/10 border border-coffee/5 cursor-pointer transition-colors"
-            >
-              ↑ Show less
-            </button>
-          </div>
-        )}
+        {visibleCount > CARDS_PER_PAGE &&
+          allSubmissions.filter(
+            (r) =>
+              speciesFilter === "all" || (r.species?.toLowerCase() || "other") === speciesFilter,
+          ).length <= visibleCount && (
+            <div className="col-span-full flex justify-center pt-2">
+              <button
+                onClick={() => setVisibleCount(CARDS_PER_PAGE)}
+                className="squish rounded-2xl bg-coffee/5 px-8 py-2 text-xs font-bold text-coffee/50 hover:bg-coffee/10 border border-coffee/5 cursor-pointer transition-colors"
+              >
+                ↑ Show less
+              </button>
+            </div>
+          )}
       </div>
 
       <div id="share-friend-form" className="mt-16">
