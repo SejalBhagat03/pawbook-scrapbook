@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import cocoImg from "@/assets/coco.jpg";
+import cocoImg from "@/assets/coco.png";
 
 interface StorySlide {
   image: string;

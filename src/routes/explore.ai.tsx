@@ -48,7 +48,7 @@ function AiPage() {
         // Special pre-set local collective reunion story
         await new Promise((r) => setTimeout(r, 1200));
         setResult(
-          `It was a perfect afternoon in the flower meadow. Bruno arrived first, proudly carrying a packet of Parle-G biscuits. Moti trotted in next, wagging his tail happily. Kitty watched them gracefully from the low branch of a mango tree, and Tommy came sprinting through the grass chasing a yellow butterfly. For the first time, all four friends shared a sunny spot together under the warm sky, happy to be part of the same loving village. 💮🐕🐶🐈🎒🍪`,
+          `It was a perfect afternoon in the flower meadow. Bruno arrived first, proudly carrying a packet of Parle-G biscuits. Coco trotted along, looking like a friendly tiger. Moti joined next, wagging his tail happily. Kitty watched them gracefully from the low branch of a mango tree, and Tommy came sprinting through the grass chasing a yellow butterfly. For the first time, all five friends shared a sunny spot together under the warm sky, happy to be part of the same loving village. 💮🐕🐶🐈🎒🍪`,
         );
         setShowCertificate(true);
       } else {
@@ -74,7 +74,7 @@ function AiPage() {
               Village Picnic Reunion Unlocked!
             </h3>
             <p className="text-xs text-coffee/85 max-w-md mx-auto mt-1">
-              You collected all 4 Village Passport stamps! As a reward, you can weave their reunion
+              You collected all 5 Village Passport stamps! As a reward, you can weave their reunion
               picnic adventure.
             </p>
           </div>
@@ -194,7 +194,7 @@ function AiPage() {
             />
 
             <p className="text-xs text-coffee/75 mt-4 leading-relaxed">
-              For exploring the village of College Street, finding all 4 friends (Bruno, Moti,
+              For exploring the village of College Street, finding all 5 friends (Bruno, Coco, Moti,
               Kitty, Tommy), and protecting their memories in their digital Scrapbook.
             </p>
 
@@ -208,7 +208,7 @@ function AiPage() {
                 shareContent(
                   {
                     title: "Village Protector Certificate!",
-                    text: "I matched with all four friends and earned the Village Protector Certificate on PawBook! 🐾",
+                    text: "I matched with all five friends and earned the Village Protector Certificate on PawBook! 🐾",
                     url: window.location.origin,
                   },
                   () => toast.success("Certificate shared / copied successfully! 🌟"),

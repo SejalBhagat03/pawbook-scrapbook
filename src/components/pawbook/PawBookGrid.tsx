@@ -249,12 +249,7 @@ interface PawBookGridProps {
   villageRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function PawBookGrid({
-  animals,
-  flippedSlugs,
-  toggleFlip,
-  villageRef,
-}: PawBookGridProps) {
+export function PawBookGrid({ animals, flippedSlugs, toggleFlip, villageRef }: PawBookGridProps) {
   return (
     <>
       <FriendCardStyle />

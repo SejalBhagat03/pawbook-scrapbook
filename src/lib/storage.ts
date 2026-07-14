@@ -1,29 +1,43 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // Import all static local assets to resolve their production path at runtime
-import bruno from "@/assets/bruno.jpg";
-import coco from "@/assets/coco.jpg";
-import moti from "@/assets/moti.jpg";
-import kitty from "@/assets/kitty.jpg";
-import tommy from "@/assets/tommy.jpg";
-import postMoti from "@/assets/post-moti.jpg";
-import postKitty from "@/assets/post-kitty.jpg";
+import bruno from "@/assets/bruno.png";
+import coco from "@/assets/coco.png";
+import moti from "@/assets/moti.png";
+import kitty from "@/assets/kitty.png";
+import tommy from "@/assets/tommy.png";
+import postMoti from "@/assets/post-moti.png";
+import postKitty from "@/assets/post-kitty.png";
 
 const assetMap: Record<string, string> = {
   "/src/assets/bruno.jpg": bruno,
+  "/src/assets/bruno.png": bruno,
   "/src/assets/coco.jpg": coco,
+  "/src/assets/coco.png": coco,
   "/src/assets/moti.jpg": moti,
+  "/src/assets/moti.png": moti,
   "/src/assets/kitty.jpg": kitty,
+  "/src/assets/kitty.png": kitty,
   "/src/assets/tommy.jpg": tommy,
+  "/src/assets/tommy.png": tommy,
   "/src/assets/post-moti.jpg": postMoti,
+  "/src/assets/post-moti.png": postMoti,
   "/src/assets/post-kitty.jpg": postKitty,
+  "/src/assets/post-kitty.png": postKitty,
   "bruno.jpg": bruno,
+  "bruno.png": bruno,
   "coco.jpg": coco,
+  "coco.png": coco,
   "moti.jpg": moti,
+  "moti.png": moti,
   "kitty.jpg": kitty,
+  "kitty.png": kitty,
   "tommy.jpg": tommy,
+  "tommy.png": tommy,
   "post-moti.jpg": postMoti,
+  "post-moti.png": postMoti,
   "post-kitty.jpg": postKitty,
+  "post-kitty.png": postKitty,
 };
 
 export function resolveAsset(path: string | undefined | null): string {

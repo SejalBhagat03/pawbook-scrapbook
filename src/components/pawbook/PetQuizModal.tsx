@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import cocoImg from "@/assets/coco.jpg";
+import cocoImg from "@/assets/coco.png";
 import { toast } from "sonner";
 import { animals, quizQuestions } from "@/lib/pawbook-data";
 import { copyToClipboard, shareContent } from "@/lib/utils";

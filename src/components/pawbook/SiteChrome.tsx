@@ -584,6 +584,13 @@ export function PassportModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
       unlocked: visited.includes("tommy"),
     },
     {
+      id: "bruno",
+      label: "Bruno's Biscuits",
+      emoji: "🐕",
+      desc: "Visit Bruno's Diary",
+      unlocked: visited.includes("bruno"),
+    },
+    {
       id: "gardener",
       label: "Meadow Gardener",
       emoji: "🌸",

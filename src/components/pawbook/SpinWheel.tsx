@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { spinRewards } from "@/lib/pawbook-data";
 
@@ -14,12 +14,7 @@ export function SpinWheel() {
   const currentRotation = useRef(0);
   const spinSpeed = useRef(0);
 
-  // Draw the wheel on load
-  useEffect(() => {
-    drawWheel();
-  }, []);
-
-  const drawWheel = () => {
+  const drawWheel = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -74,7 +69,12 @@ export function SpinWheel() {
     ctx.arc(center, center, 5, 0, 2 * Math.PI);
     ctx.fillStyle = "#FF6F61";
     ctx.fill();
-  };
+  }, [segments]);
+
+  // Draw the wheel on load
+  useEffect(() => {
+    drawWheel();
+  }, [drawWheel]);
 
   const handleSpin = () => {
     if (spinning) return;

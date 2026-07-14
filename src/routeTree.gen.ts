@@ -20,6 +20,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PawFriendsIndexRouteImport } from './routes/paw-friends.index'
 import { Route as ExploreIndexRouteImport } from './routes/explore.index'
+import { Route as QrIdRouteImport } from './routes/qr.$id'
 import { Route as PawFriendsSlugRouteImport } from './routes/paw-friends.$slug'
 import { Route as FoundFriendsIdRouteImport } from './routes/found-friends.$id'
 import { Route as ExploreNatureRouteImport } from './routes/explore.nature'
@@ -83,6 +84,11 @@ const ExploreIndexRoute = ExploreIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ExploreRoute,
 } as any)
+const QrIdRoute = QrIdRouteImport.update({
+  id: '/qr/$id',
+  path: '/qr/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PawFriendsSlugRoute = PawFriendsSlugRouteImport.update({
   id: '/paw-friends/$slug',
   path: '/paw-friends/$slug',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/explore/nature': typeof ExploreNatureRoute
   '/found-friends/$id': typeof FoundFriendsIdRoute
   '/paw-friends/$slug': typeof PawFriendsSlugRoute
+  '/qr/$id': typeof QrIdRoute
   '/explore/': typeof ExploreIndexRoute
   '/paw-friends/': typeof PawFriendsIndexRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/explore/nature': typeof ExploreNatureRoute
   '/found-friends/$id': typeof FoundFriendsIdRoute
   '/paw-friends/$slug': typeof PawFriendsSlugRoute
+  '/qr/$id': typeof QrIdRoute
   '/explore': typeof ExploreIndexRoute
   '/paw-friends': typeof PawFriendsIndexRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/explore/nature': typeof ExploreNatureRoute
   '/found-friends/$id': typeof FoundFriendsIdRoute
   '/paw-friends/$slug': typeof PawFriendsSlugRoute
+  '/qr/$id': typeof QrIdRoute
   '/explore/': typeof ExploreIndexRoute
   '/paw-friends/': typeof PawFriendsIndexRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/explore/nature'
     | '/found-friends/$id'
     | '/paw-friends/$slug'
+    | '/qr/$id'
     | '/explore/'
     | '/paw-friends/'
     | '/admin/moderation'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/explore/nature'
     | '/found-friends/$id'
     | '/paw-friends/$slug'
+    | '/qr/$id'
     | '/explore'
     | '/paw-friends'
     | '/admin/moderation'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/explore/nature'
     | '/found-friends/$id'
     | '/paw-friends/$slug'
+    | '/qr/$id'
     | '/explore/'
     | '/paw-friends/'
     | '/_authenticated/admin/moderation'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoriesRoute: typeof StoriesRoute
   PawFriendsSlugRoute: typeof PawFriendsSlugRoute
+  QrIdRoute: typeof QrIdRoute
   PawFriendsIndexRoute: typeof PawFriendsIndexRoute
 }
 
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/explore/'
       preLoaderRoute: typeof ExploreIndexRouteImport
       parentRoute: typeof ExploreRoute
+    }
+    '/qr/$id': {
+      id: '/qr/$id'
+      path: '/qr/$id'
+      fullPath: '/qr/$id'
+      preLoaderRoute: typeof QrIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/paw-friends/$slug': {
       id: '/paw-friends/$slug'
@@ -456,6 +476,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoriesRoute: StoriesRoute,
   PawFriendsSlugRoute: PawFriendsSlugRoute,
+  QrIdRoute: QrIdRoute,
   PawFriendsIndexRoute: PawFriendsIndexRoute,
 }
 export const routeTree = rootRouteImport

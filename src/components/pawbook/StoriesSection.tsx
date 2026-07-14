@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { resolveAsset } from "@/lib/storage";
 import { playRustle, playPageFlip } from "@/lib/sound";
-import type { Animal } from "@/lib/pawbook-data";
+import type { Animal, Memory } from "@/lib/pawbook-data";
 
 function ActionButton({
   icon,
@@ -57,10 +57,8 @@ function sampleComments(slug: string) {
   return map[slug] ?? [];
 }
 
-
-
 interface StoriesSectionProps {
-  memories: any[];
+  memories: Memory[];
   animals: Animal[];
   likes: Record<string, number>;
   envelopeOpen: Record<string, boolean>;
@@ -75,7 +73,7 @@ interface StoriesSectionProps {
     memoryId: string,
     type: string,
     animalName: string,
-    e?: React.MouseEvent<HTMLButtonElement>
+    e?: React.MouseEvent<HTMLButtonElement>,
   ) => void;
   handleAddComment: (memoryId: string) => void;
   newCommentAuthor: string;

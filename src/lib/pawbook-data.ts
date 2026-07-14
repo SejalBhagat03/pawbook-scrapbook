@@ -1,9 +1,10 @@
-import coco from "@/assets/coco.jpg";
-import moti from "@/assets/moti.jpg";
-import kitty from "@/assets/kitty.jpg";
-import tommy from "@/assets/tommy.jpg";
-import postMoti from "@/assets/post-moti.jpg";
-import postKitty from "@/assets/post-kitty.jpg";
+import coco from "@/assets/coco.png";
+import bruno from "@/assets/bruno.png";
+import moti from "@/assets/moti.png";
+import kitty from "@/assets/kitty.png";
+import tommy from "@/assets/tommy.png";
+import postMoti from "@/assets/post-moti.png";
+import postKitty from "@/assets/post-kitty.png";
 
 export type Mood = "happy" | "funny" | "emotional" | "rain" | "rescue" | "night";
 
@@ -209,6 +210,57 @@ const defaultAnimals: Animal[] = [
         date: "April 2026",
         label: "🎂 7th Birthday",
         note: "Made a huge dog-friendly treat cake. Coco loved it!",
+      },
+    ],
+  },
+  {
+    slug: "bruno",
+    name: "Bruno",
+    emoji: "🐕",
+    nickname: "The Biscuit King",
+    bio: "Professional nap taker, butterfly watcher, and biscuit tester.",
+    story: "I wait near the college gate every morning for my human friends ❤️",
+    image: bruno,
+    color: "yellow",
+    personality: "Friendly Biscuit Lover",
+    home: "College Street",
+    favoriteFood: "Parle-G biscuits",
+    firstMet: "12 Jan 2025",
+    mood: "Happy 😊",
+    status: "safe",
+    stats: { pawPrints: 250, treats: 120, memories: 35, adventures: 18 },
+    badges: ["Happy Soul ⭐", "Friendly Paw 🐾", "Biscuit King 🍪", "Tail Wag Champion 🏆"],
+    lastSeenLocation: "Near the college gate",
+    lastUpdated: "3 hours ago",
+    pawId: "PB-BRUN-1001",
+    ageEstimate: "5 years",
+    gender: "Male",
+    breedType: "Indy Mix",
+    knownSince: "12 Jan 2025",
+    homeArea: "College Street",
+    vaccinated: true,
+    sterilized: true,
+    medicalNotes: "Healthy and fit. Loves biscuits but needs controlled diet.",
+    healthRecords: [
+      { type: "Vaccination", date: "15 Jan 2026", note: "Annual rabies vaccine completed." },
+      { type: "Checkup", date: "22 Feb 2026", note: "Dewormed and weighed. Perfect health." },
+    ],
+    friendliness: 95,
+    energy: 70,
+    trust: 90,
+    playfulness: 80,
+    communityLove: { followers: 180, memories: 35, helpers: 15 },
+    dailyThought: "The students brought two packets of biscuits today. A glorious morning! 🍪",
+    careTimeline: [
+      {
+        date: "Jan 2025",
+        label: "🐾 First met Bruno",
+        note: "Began waiting at the college gate for students.",
+      },
+      {
+        date: "Feb 2025",
+        label: "🍪 Parle-G Pact",
+        note: "Decided Parle-G biscuits are the ultimate reward.",
       },
     ],
   },
@@ -568,7 +620,7 @@ const defaultSpinRewards: SpinReward[] = [
     icon: "📸",
     title: "Rare Reunion Photo 📸",
     content:
-      "A student once snapped a photo of all 4 pets sleeping in a neat row under the tea stall during a monsoon storm. Total peace!",
+      "A student once snapped a photo of all 5 pets sleeping in a neat row under the tea stall during a monsoon storm. Total peace!",
   },
 ];
 
@@ -601,7 +653,7 @@ const defaultSurprises: SurpriseReward[] = [
     title: "Village Secret 🗺️",
     icon: "☕",
     content:
-      "During heavy rains, all four pets shelter under the same tea stall roof. Kitty gets the dry chair, while the dogs share the mat!",
+      "During heavy rains, all five pets shelter under the same tea stall roof. Kitty gets the dry chair, while the dogs share the mat!",
   },
   {
     title: "Cute Pet Fact 🐾",
@@ -658,10 +710,14 @@ export function normalizeAnimal(raw: Partial<Animal>): Animal {
     energy: raw.energy ?? def?.energy ?? 70,
     trust: raw.trust ?? def?.trust ?? 75,
     playfulness: raw.playfulness ?? def?.playfulness ?? 75,
-    communityLove:
-      raw.communityLove ?? def?.communityLove ?? { followers: 0, memories: 0, helpers: 0 },
+    communityLove: raw.communityLove ??
+      def?.communityLove ?? { followers: 0, memories: 0, helpers: 0 },
     dailyThought:
-      raw.dailyThought ?? def?.dailyThought ?? raw.story ?? def?.story ?? "Just happy to be here 🐾",
+      raw.dailyThought ??
+      def?.dailyThought ??
+      raw.story ??
+      def?.story ??
+      "Just happy to be here 🐾",
     careTimeline:
       Array.isArray(raw.careTimeline) && raw.careTimeline.length > 0
         ? raw.careTimeline
@@ -873,6 +929,14 @@ export const careTimeline = [
 
 export const mapPlaces = [
   { id: "garden", name: "Garden Friends", icon: "🌳", top: "22%", left: "18%", animals: ["kitty"] },
+  {
+    id: "gardenhouse",
+    name: "Garden House",
+    icon: "🏡",
+    top: "22%",
+    left: "38%",
+    animals: ["coco"],
+  },
   { id: "tea", name: "Tea Shop Paws", icon: "☕", top: "60%", left: "62%", animals: ["moti"] },
   {
     id: "college",
@@ -880,7 +944,7 @@ export const mapPlaces = [
     icon: "🏫",
     top: "38%",
     left: "72%",
-    animals: ["coco"],
+    animals: ["bruno"],
   },
   { id: "home", name: "Home Friends", icon: "🏠", top: "70%", left: "28%", animals: ["tommy"] },
 ];

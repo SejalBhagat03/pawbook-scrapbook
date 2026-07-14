@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useCMS } from "@/lib/pawbook-data";
-import cocoImg from "@/assets/coco.jpg";
+import cocoImg from "@/assets/coco.png";
 
 interface PetChat {
   slug: string;

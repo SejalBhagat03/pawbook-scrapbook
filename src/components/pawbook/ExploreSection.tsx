@@ -316,7 +316,7 @@ export function ExploreSection({
                   Village Picnic Reunion Unlocked!
                 </h3>
                 <p className="text-xs text-coffee/85 max-w-md mx-auto mt-1">
-                  You collected all 4 Village Passport stamps! As a reward, you can weave their
+                  You collected all 5 Village Passport stamps! As a reward, you can weave their
                   reunion picnic adventure.
                 </p>
               </div>
@@ -464,8 +464,8 @@ export function ExploreSection({
                 />
 
                 <p className="text-xs text-coffee/75 mt-4 leading-relaxed">
-                  For exploring the village of College Street, finding all 4 friends (Coco, Moti,
-                  Kitty, Tommy), and protecting their memories in their digital Scrapbook.
+                  For exploring the village of College Street, finding all 5 friends (Bruno, Coco,
+                  Moti, Kitty, Tommy), and protecting their memories in their digital Scrapbook.
                 </p>
 
                 <div className="mt-4 border-t border-coffee/15 pt-3 flex items-center justify-between text-[10px] text-coffee/50 uppercase tracking-widest font-bold">
@@ -478,7 +478,7 @@ export function ExploreSection({
                     shareContent(
                       {
                         title: "Village Protector Certificate!",
-                        text: "I matched with all four friends and earned the Village Protector Certificate on PawBook! 🐾",
+                        text: "I matched with all five friends and earned the Village Protector Certificate on PawBook! 🐾",
                         url: window.location.origin,
                       },
                       () => toast.success("Certificate shared / copied successfully! 🌟"),

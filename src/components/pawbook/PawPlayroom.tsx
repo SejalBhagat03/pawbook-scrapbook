@@ -66,8 +66,7 @@ const PET_PROMPTS: Record<
     ],
   },
   tommy: {
-    greeting:
-      "Let's go! What are we chasing today? 🎾 A leaf? A butterfly? I have maximum energy!",
+    greeting: "Let's go! What are we chasing today? 🎾 A leaf? A butterfly? I have maximum energy!",
     prompts: [
       {
         text: "Throw tennis ball 🎾",
@@ -93,7 +92,7 @@ interface PawPlayroomProps {
     memoryId: string,
     type: string,
     animalName: string,
-    e?: React.MouseEvent<HTMLButtonElement>
+    e?: React.MouseEvent<HTMLButtonElement>,
   ) => void;
   setQuizOpen: (open: boolean) => void;
   activePlayroomIndex: number;
@@ -165,10 +164,8 @@ export function PawPlayroom({
               </div>
               <div>
                 <p className="text-xs font-bold text-coffee flex items-center gap-1">
-                   {a.name} {a.emoji}{" "}
-                  <span className="text-[9px] text-coffee/40 font-normal">
-                    · {a.lastUpdated}
-                  </span>
+                  {a.name} {a.emoji}{" "}
+                  <span className="text-[9px] text-coffee/40 font-normal">· {a.lastUpdated}</span>
                 </p>
                 <p className="text-[11px] text-coffee/85 italic">
                   "{(a.dailyThought || a.story || "").slice(0, 45)}..."
@@ -335,12 +332,10 @@ export function PawPlayroom({
         >
           <div>
             <span className="text-6xl block my-4 animate-bounce">🐾</span>
-            <h3 className="font-display text-2xl mb-2 text-coffee">
-              Find Your Paw Best Friend
-            </h3>
+            <h3 className="font-display text-2xl mb-2 text-coffee">Find Your Paw Best Friend</h3>
             <p className="text-xs text-coffee/70 max-w-xs mx-auto leading-relaxed">
-              Take our viral 5-question personality matching game to find out which beloved
-              friend shares your soul energy!
+              Take our viral 5-question personality matching game to find out which beloved friend
+              shares your soul energy!
             </p>
             <div className="mt-6 space-y-2 bg-cream/30 p-4 rounded-2xl border border-coffee/5 text-left max-w-xs mx-auto">
               <p className="text-[10px] font-bold text-coffee/50 uppercase tracking-wider">

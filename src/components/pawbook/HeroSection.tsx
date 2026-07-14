@@ -22,7 +22,7 @@ interface HeroSectionProps {
     memoryId: string,
     type: string,
     animalName: string,
-    e?: React.MouseEvent<HTMLButtonElement>
+    e?: React.MouseEvent<HTMLButtonElement>,
   ) => void;
   memoriesLength: number;
 }
@@ -54,8 +54,8 @@ export function HeroSection({
           <span className="text-peach">story worth remembering 🐾</span>
         </h1>
         <p className="max-w-md text-sm md:text-base leading-relaxed text-coffee/85 sm:text-lg">
-          Create memories, follow journeys, and celebrate the little paws and wings that make
-          our world feel like home.
+          Create memories, follow journeys, and celebrate the little paws and wings that make our
+          world feel like home.
         </p>
         <div className="flex flex-row gap-3 pt-1 sm:gap-4">
           <button

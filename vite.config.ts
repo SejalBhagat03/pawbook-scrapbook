@@ -15,6 +15,7 @@ export default defineConfig({
   },
   nitro: {
     preset: "vercel",
+    // @ts-expect-error - externals is supported by Nitro but not defined in this wrapper's types
     externals: {
       // Force Nitro to inline these into the server bundle instead of externalizing them.
       // Without this, Vercel serverless runtime cannot find tslib / supabase at runtime.

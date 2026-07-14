@@ -143,6 +143,26 @@ function AnimalProfile() {
 
   const [scrollProgress, setScrollProgress] = useState(0);
 
+  // Digital Pet ID states
+  const [isOwnerMode, setIsOwnerMode] = useState(false);
+  const [isLost, setIsLost] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState("5000");
+  const [finderMessages, setFinderMessages] = useState<
+    { text: string; location?: string; date: string }[]
+  >([]);
+  const [activePlan, setActivePlan] = useState<"free" | "starter" | "premium">("free");
+  const [tagShape, setTagShape] = useState<"bone" | "circle" | "heart">("bone");
+  const [tagColor, setTagColor] = useState("peach");
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [isOrdering, setIsOrdering] = useState(false);
+  const [orderComplete, setOrderComplete] = useState(false);
+
+  // New message form states
+  const [finderText, setFinderText] = useState("");
+  const [shareLocationState, setShareLocationState] = useState<"idle" | "getting" | "shared">(
+    "idle",
+  );
+
   // Track page scroll to grow care timeline thread line
   useEffect(() => {
     const handleScroll = () => {
@@ -208,6 +228,41 @@ function AnimalProfile() {
     setExtraLove(parseInt(localStorage.getItem(loveKey) || "0", 10));
     setExtraTreats(parseInt(localStorage.getItem(treatsKey) || "0", 10));
     setAccessory(localStorage.getItem(`pawbook-accessory-${a.slug}`));
+
+    // Load Digital ID configurations
+    setIsLost(localStorage.getItem(`pawbook-lost-${a.slug}`) === "true");
+    setRewardAmount(localStorage.getItem(`pawbook-reward-${a.slug}`) || "5000");
+
+    const savedPlan = localStorage.getItem(`pawbook-plan-${a.slug}`);
+    if (savedPlan === "free" || savedPlan === "starter" || savedPlan === "premium") {
+      setActivePlan(savedPlan);
+    }
+    const savedShape = localStorage.getItem(`pawbook-shape-${a.slug}`);
+    if (savedShape === "bone" || savedShape === "circle" || savedShape === "heart") {
+      setTagShape(savedShape);
+    }
+
+    setTagColor(localStorage.getItem(`pawbook-tagcolor-${a.slug}`) || "peach");
+
+    const savedMessages = localStorage.getItem(`pawbook-findermessages-${a.slug}`);
+    if (savedMessages) {
+      try {
+        setFinderMessages(JSON.parse(savedMessages));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Detect QR Scan parameter
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("scan") === "qr") {
+        toast.info(`🔍 Smart QR Code Scanned!`, {
+          description: `Verified Digital ID for ${a.name} loaded. Logged GPS verification.`,
+          duration: 6000,
+        });
+      }
+    }
 
     // Register passport stamp
     const stampsKey = "pawbook-visited-stamps";
@@ -314,35 +369,29 @@ function AnimalProfile() {
     });
     setTimeout(() => setMemoryPlaying(false), 2000);
   };
-
   return (
     <PageShell>
-      {/* Cover */}
-      <section className="relative">
-        {/* Back Bookmark */}
+      {/* Top Header Row */}
+      <div className="mx-auto max-w-5xl px-6 pt-6 flex justify-between items-center z-30 relative select-none">
         <Link
           to="/"
           hash="paw-friends"
-          className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 group flex items-center gap-2 rounded-2xl border-2 border-dashed border-peach/50 bg-white px-3 py-1.5 sm:px-4 sm:py-2 font-display text-xs sm:text-sm font-bold text-coffee scrapbook-shadow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+          className="group flex items-center gap-2 rounded-2xl border-2 border-dashed border-peach/40 bg-white px-3.5 py-2 font-display text-xs font-bold text-coffee scrapbook-shadow hover:scale-105 active:scale-95 transition-transform cursor-pointer"
         >
-          <span className="text-sm sm:text-base group-hover:-translate-x-0.5 transition-transform">
-            🏡 🐾
-          </span>
+          <span className="text-sm group-hover:-translate-x-0.5 transition-transform">🏡 🐾</span>
           <span>Return to Village</span>
         </Link>
 
-        <div
-          className={`relative h-56 sm:h-72 md:h-80 bg-${a.color}/60`}
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 20% 30%, color-mix(in oklab, var(--color-peach) 30%, transparent), transparent 40%), radial-gradient(circle at 80% 60%, color-mix(in oklab, var(--color-sky) 40%, transparent), transparent 50%)",
-          }}
-        >
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-20 text-9xl">
-            {a.emoji}
+        {isLost && (
+          <div className="bg-red-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-2xl border border-red-600 shadow-sm animate-pulse flex items-center gap-1.5 uppercase tracking-wider">
+            🚨 Missing Pet Alert
           </div>
-        </div>
-        <div className="mx-auto -mt-20 max-w-5xl px-6">
+        )}
+      </div>
+
+      {/* Main Profile Info Section */}
+      <section className="relative">
+        <div className="mx-auto max-w-5xl px-6 pt-6">
           <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-end">
             <div className="washi-tape-wrap relative">
               <div className="washi-tape absolute -top-3 left-1/2 z-20 h-6 w-20 -translate-x-1/2 rotate-3" />
@@ -531,10 +580,15 @@ function AnimalProfile() {
           {/* QR Paw Tag */}
           <div className="rounded-3xl border-2 border-dashed border-peach/50 bg-[#FDFBF7] p-5 scrapbook-shadow text-center relative overflow-hidden flex flex-col items-center">
             <p className="text-[10px] font-bold uppercase tracking-widest text-coffee/50 mb-2">
-              🏷️ QR Paw Tag
+              🏷️ QR Paw Tag & Digital ID
             </p>
-            <p className="text-[11px] font-mono font-bold text-coffee">
-              ID: {a.pawId || `PB-${a.slug.toUpperCase()}-1024`}
+            <p className="text-[11px] font-mono font-bold text-coffee flex items-center gap-1.5 justify-center">
+              <span>ID: {a.pawId || `PB-${a.slug.toUpperCase()}-1024`}</span>
+              {activePlan !== "free" && (
+                <span className="text-[9px] bg-peach/25 text-coffee border border-coffee/20 px-1 rounded font-sans font-bold">
+                  {activePlan === "starter" ? "⚡ STARTER" : "💎 PREMIUM"}
+                </span>
+              )}
             </p>
 
             <div className="my-4 size-28 bg-white border border-coffee/10 rounded-2xl p-2.5 flex items-center justify-center scrapbook-shadow">
@@ -560,13 +614,200 @@ function AnimalProfile() {
             </div>
 
             <p className="text-[10px] text-coffee/60 leading-tight">
-              Scan tag or print to place near {a.name}'s feeding spot so anyone can read their
-              story.
+              Scan this tag or order a custom smart tag to protect {a.name} in lost mode.
             </p>
+
+            <button
+              onClick={() => {
+                setOrderComplete(false);
+                setShowTagModal(true);
+              }}
+              className="mt-4 w-full border-2 border-coffee bg-white hover:bg-peach/10 rounded-2xl py-2 text-xs font-bold text-coffee transition active:scale-95 cursor-pointer shadow-xs flex items-center justify-center gap-1"
+            >
+              🏷️ Order Smart Tag (₹299)
+            </button>
+
+            {/* Owner controls button */}
+            <button
+              onClick={() => setIsOwnerMode(!isOwnerMode)}
+              className="w-full text-center border border-coffee/20 bg-cream/10 hover:bg-coffee/5 rounded-2xl py-1.5 text-[10px] font-bold text-coffee/70 transition mt-2 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              ⚙️ {isOwnerMode ? "Hide Owner Settings" : "Open Owner Settings"}
+            </button>
+
+            {isOwnerMode && (
+              <div className="w-full rounded-2xl border border-coffee bg-white p-4 text-left mt-3 space-y-3 animate-fade-in scrapbook-shadow select-none">
+                <h4 className="text-xs font-bold text-coffee border-b border-coffee/5 pb-1 flex items-center gap-1">
+                  🔑 Owner Controls
+                </h4>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-coffee">⚠️ Lost Mode</p>
+                    <p className="text-[9px] text-coffee/50">Show alert & SOS for finders</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = !isLost;
+                      setIsLost(next);
+                      localStorage.setItem(`pawbook-lost-${a.slug}`, next.toString());
+                      toast.success(next ? "Lost Mode enabled! 🚨" : "Lost Mode disabled! 🎉");
+                    }}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold transition border cursor-pointer ${
+                      isLost
+                        ? "bg-red-500 text-white border-red-600 animate-pulse"
+                        : "bg-cream text-coffee border-coffee/20 hover:bg-coffee/5"
+                    }`}
+                  >
+                    {isLost ? "ON" : "OFF"}
+                  </button>
+                </div>
+
+                {isLost && (
+                  <div>
+                    <label className="text-[8px] uppercase tracking-wider text-coffee/50 font-bold block mb-1">
+                      Reward Amount (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={rewardAmount}
+                      onChange={(e) => {
+                        setRewardAmount(e.target.value);
+                        localStorage.setItem(`pawbook-reward-${a.slug}`, e.target.value);
+                      }}
+                      className="w-full border border-coffee/20 rounded-lg px-2 py-1 text-xs font-mono font-bold focus:border-peach outline-none"
+                    />
+                  </div>
+                )}
+
+                <div className="border-t border-coffee/10 pt-2.5">
+                  <p className="text-[10px] font-bold text-coffee mb-1.5 flex items-center justify-between">
+                    <span>Finder SOS Alerts</span>
+                    <span className="text-[9px] text-peach font-normal">
+                      {finderMessages.length} logs
+                    </span>
+                  </p>
+                  {finderMessages.length === 0 ? (
+                    <p className="text-[9px] text-coffee/40 italic">No finder alerts received.</p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1">
+                      {finderMessages.map((m, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-cream/40 border border-coffee/5 p-1.5 rounded-lg text-[9px] space-y-0.5"
+                        >
+                          <p className="font-bold text-coffee flex items-center justify-between">
+                            <span>Alert #{finderMessages.length - idx}</span>
+                            <span className="text-[8px] text-coffee/40 font-normal">{m.date}</span>
+                          </p>
+                          <p className="text-coffee/80 leading-normal">"{m.text}"</p>
+                          {m.location && (
+                            <p className="text-peach font-bold text-[8px] flex items-center gap-0.5">
+                              📍 Location: {m.location}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="space-y-6 md:col-span-2">
+          {/* Lost Pet SOS Finder Card */}
+          {isLost && (
+            <div className="rounded-3xl border-2 border-orange-500 bg-orange-50/50 p-6 scrapbook-shadow space-y-4 animate-fade-in">
+              <div className="flex items-center gap-2">
+                <span className="text-3xl animate-bounce">🛟</span>
+                <div>
+                  <h3 className="font-display text-xl text-orange-950">Found {a.name}?</h3>
+                  <p className="text-xs text-orange-800">Help reunite them with their family!</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <a
+                  href="tel:+919876543210"
+                  onClick={() => toast.success(`Simulating call to owner... 📞`)}
+                  className="rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs py-3 text-center flex items-center justify-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
+                >
+                  <span>📞</span> Call Owner
+                </a>
+                <button
+                  onClick={() => {
+                    setShareLocationState("getting");
+                    setTimeout(() => {
+                      setShareLocationState("shared");
+                      // log location to messages
+                      const newAlert = {
+                        text: "Finder scanned tag & shared location.",
+                        location: "28.6139° N, 77.2090° E (Vite Local Mock)",
+                        date: new Date().toLocaleTimeString(),
+                      };
+                      const updated = [newAlert, ...finderMessages];
+                      setFinderMessages(updated);
+                      localStorage.setItem(
+                        `pawbook-findermessages-${a.slug}`,
+                        JSON.stringify(updated),
+                      );
+                      toast.success("Location shared! Owner has been paged. 📍");
+                    }, 1200);
+                  }}
+                  className={`rounded-2xl font-bold text-xs py-3 text-center flex items-center justify-center gap-1.5 shadow-sm transition active:scale-95 border cursor-pointer ${
+                    shareLocationState === "shared"
+                      ? "bg-green-600 border-green-700 text-white"
+                      : "bg-white border-orange-500 text-orange-700 hover:bg-orange-100/50"
+                  }`}
+                >
+                  <span>📍</span>{" "}
+                  {shareLocationState === "getting"
+                    ? "Locating..."
+                    : shareLocationState === "shared"
+                      ? "Location Sent!"
+                      : "Share Location"}
+                </button>
+              </div>
+
+              <div className="border-t border-orange-200 pt-3 space-y-2">
+                <label className="text-[10px] uppercase tracking-wider text-orange-850 font-bold block">
+                  Send a quick message to the owner
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Spotted Bruno near library windows!"
+                    value={finderText}
+                    onChange={(e) => setFinderText(e.target.value)}
+                    className="flex-1 border-2 border-orange-200 rounded-xl px-3 py-2 text-xs focus:border-orange-500 bg-white outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!finderText.trim()) return;
+                      const newAlert = {
+                        text: finderText.trim(),
+                        date: new Date().toLocaleTimeString(),
+                      };
+                      const updated = [newAlert, ...finderMessages];
+                      setFinderMessages(updated);
+                      localStorage.setItem(
+                        `pawbook-findermessages-${a.slug}`,
+                        JSON.stringify(updated),
+                      );
+                      setFinderText("");
+                      toast.success("Message sent to owner! 📧");
+                    }}
+                    className="bg-orange-850 hover:bg-orange-950 text-white rounded-xl px-3 text-xs font-bold transition active:scale-95 cursor-pointer"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Lined Notebook Paper Story */}
           <div className="rounded-3xl border border-coffee/10 bg-white p-6 scrapbook-shadow relative">
             <div className="absolute top-4 right-6 text-2xl rotate-6 animate-float">✍️</div>
@@ -865,6 +1106,194 @@ function AnimalProfile() {
           <span>Back to Village Scrapbook</span>
         </Link>
       </div>
+
+      {/* Smart QR Tag Customizer Modal */}
+      {showTagModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-coffee/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl border-2 border-coffee scrapbook-shadow w-full max-w-md p-6 relative flex flex-col justify-between max-h-[90vh] overflow-y-auto animate-fade-in select-none">
+            <button
+              onClick={() => {
+                setShowTagModal(false);
+                setIsOrdering(false);
+                setOrderComplete(false);
+              }}
+              className="absolute top-4 right-4 text-coffee/40 hover:text-coffee text-xl font-bold transition cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div>
+              <div className="text-center mb-5">
+                <span className="text-4xl block my-1">🏷️</span>
+                <h3 className="font-display text-2xl text-coffee">Custom Smart QR Tag</h3>
+                <p className="text-xs text-coffee/60">
+                  Configure a physical collar tag shipped directly to you.
+                </p>
+              </div>
+
+              {/* Tag Live Preview */}
+              <div className="flex justify-center my-6">
+                <div
+                  className={`size-32 rounded-2xl flex flex-col items-center justify-center p-4 shadow-md transition-all border-4 border-coffee relative overflow-hidden bg-cream`}
+                  style={{
+                    backgroundColor:
+                      tagColor === "peach"
+                        ? "#FFF3EA"
+                        : tagColor === "sky"
+                          ? "#EBF6FA"
+                          : tagColor === "sage"
+                            ? "#F0F5F3"
+                            : tagColor === "yellow"
+                              ? "#FFFBEB"
+                              : "#FDF6FF",
+                    borderRadius:
+                      tagShape === "circle" ? "9999px" : tagShape === "heart" ? "24px" : "16px",
+                  }}
+                >
+                  {/* Bone Shape simulation decorative bumps */}
+                  {tagShape === "bone" && (
+                    <>
+                      <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-12 rounded-full bg-coffee/10 border-r border-coffee/25" />
+                      <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-12 rounded-full bg-coffee/10 border-l border-coffee/25" />
+                    </>
+                  )}
+                  {/* Heart Shape simulation decor */}
+                  {tagShape === "heart" && (
+                    <div className="absolute inset-0 opacity-15 text-7xl flex items-center justify-center select-none pointer-events-none">
+                      ❤️
+                    </div>
+                  )}
+
+                  <span className="text-3xl mb-1 z-10">{a.emoji}</span>
+                  <p className="font-mono text-[9px] font-bold text-coffee uppercase bg-white px-1.5 py-0.5 rounded border border-coffee/20 z-10">
+                    {a.pawId || `PB-${a.slug.toUpperCase()}-1024`}
+                  </p>
+                  <p className="font-display text-[10px] font-bold text-coffee/70 mt-1 z-10">
+                    {a.name}
+                  </p>
+                </div>
+              </div>
+
+              {/* Customizer controls */}
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-coffee/60 font-bold mb-1.5">
+                    Tag Shape
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["bone", "circle", "heart"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setTagShape(s)}
+                        className={`rounded-xl border-2 py-2 text-xs font-bold capitalize transition cursor-pointer ${
+                          tagShape === s
+                            ? "border-coffee bg-peach/10 text-coffee"
+                            : "border-coffee/10 hover:bg-cream/40"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-coffee/60 font-bold mb-1.5">
+                    Tag Color
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    {["peach", "sky", "sage", "yellow", "pink"].map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setTagColor(c)}
+                        className={`size-8 rounded-full border-2 transition ${
+                          tagColor === c ? "border-coffee scale-110" : "border-transparent"
+                        } bg-${c}/60 hover:scale-105 cursor-pointer`}
+                        style={{
+                          backgroundColor:
+                            c === "peach"
+                              ? "#FFD8BE"
+                              : c === "sky"
+                                ? "#C6E2E9"
+                                : c === "sage"
+                                  ? "#E2ECE9"
+                                  : c === "yellow"
+                                    ? "#FFF1C5"
+                                    : "#FFC6FF",
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Plans pricing */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-coffee/60 font-bold mb-1.5">
+                    Select Plan
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["free", "starter", "premium"] as const).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setActivePlan(p)}
+                        className={`rounded-xl border-2 p-2.5 text-[10px] font-bold text-left transition flex flex-col justify-between cursor-pointer min-h-[64px] ${
+                          activePlan === p ? "border-coffee bg-peach/10" : "border-coffee/10"
+                        }`}
+                      >
+                        <span className="capitalize">{p}</span>
+                        <span className="text-xs font-extrabold text-coffee mt-1">
+                          {p === "free" ? "₹0" : p === "starter" ? "₹299/yr" : "₹599/yr"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 pt-4 border-t border-coffee/10">
+              {!isOrdering && !orderComplete && (
+                <button
+                  onClick={() => {
+                    setIsOrdering(true);
+                    setTimeout(() => {
+                      setIsOrdering(false);
+                      setOrderComplete(true);
+                      localStorage.setItem(`pawbook-plan-${a.slug}`, activePlan);
+                      localStorage.setItem(`pawbook-shape-${a.slug}`, tagShape);
+                      localStorage.setItem(`pawbook-tagcolor-${a.slug}`, tagColor);
+                      toast.success("Smart ID plan configured successfully! 🎉");
+                    }, 2000);
+                  }}
+                  className="w-full bg-coffee hover:bg-peach text-cream hover:text-coffee font-bold text-sm py-3 rounded-2xl shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  🚀 Order Smart QR Tag •{" "}
+                  {activePlan === "free" ? "₹0" : activePlan === "starter" ? "₹299/yr" : "₹599/yr"}
+                </button>
+              )}
+
+              {isOrdering && (
+                <div className="flex flex-col items-center py-2 text-center">
+                  <span className="size-6 border-4 border-coffee border-t-peach rounded-full animate-spin mb-2" />
+                  <p className="text-xs font-bold text-coffee">Connecting secure gateway...</p>
+                </div>
+              )}
+
+              {orderComplete && (
+                <div className="text-center py-2">
+                  <p className="text-green-700 font-extrabold text-sm flex items-center justify-center gap-1.5">
+                    ✅ Smart ID Activated!
+                  </p>
+                  <p className="text-[10px] text-coffee/60 mt-1">
+                    Tag configuration saved. Real shipping simulated successfully.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </PageShell>
   );
 }

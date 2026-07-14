@@ -17,12 +17,19 @@ function isLocalAsset(ref: string): boolean {
   const filename = ref.split("/").pop();
   const staticFiles = [
     "bruno.jpg",
+    "bruno.png",
     "coco.jpg",
+    "coco.png",
     "moti.jpg",
+    "moti.png",
     "kitty.jpg",
+    "kitty.png",
     "tommy.jpg",
+    "tommy.png",
     "post-moti.jpg",
+    "post-moti.png",
     "post-kitty.jpg",
+    "post-kitty.png",
   ];
   if (filename && staticFiles.includes(filename)) {
     return true;
