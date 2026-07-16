@@ -3,6 +3,7 @@ import bruno from "@/assets/bruno.png";
 import moti from "@/assets/moti.png";
 import kitty from "@/assets/kitty.png";
 import tommy from "@/assets/tommy.png";
+import chetak from "@/assets/chetak.png";
 import postMoti from "@/assets/post-moti.png";
 import postKitty from "@/assets/post-kitty.png";
 
@@ -433,6 +434,49 @@ const defaultAnimals: Animal[] = [
       },
     ],
   },
+  {
+    slug: "chetak",
+    name: "Chetak",
+    emoji: "🐎",
+    nickname: "The Royal Warrior",
+    bio: "Majestic jet-black horse with a proud royal heritage. Brave, swift, and extremely loyal! 🐎👑",
+    story: "I wander the misty stone pathways of the hills. My name comes from the legendary warrior horse Chetak of Mewar. I love eating juicy carrots and greeting travelers with a majestic shake of my mane.",
+    image: chetak,
+    color: "sky",
+    personality: "Royal & Dignified",
+    home: "Misty Mountain Trail",
+    favoriteFood: "Fresh red carrots & apples",
+    firstMet: "16 July 2026",
+    mood: "Majestic 👑",
+    status: "safe",
+    stats: { pawPrints: 480, treats: 150, memories: 42, adventures: 30 },
+    badges: ["Royal Heritage 👑", "Misty Path Guard ⛰️", "Carrot Connoisseur 🥕", "Majestic Mane 🐎"],
+    lastSeenLocation: "Foggy stone path near the valley gate",
+    lastUpdated: "Just now",
+    pawId: "PB-CHET-5024",
+    ageEstimate: "6 years",
+    gender: "Male",
+    breedType: "Marwari Horse",
+    knownSince: "16 July 2026",
+    homeArea: "Misty Mountain Trail",
+    vaccinated: true,
+    sterilized: false,
+    medicalNotes: "Extremely healthy and strong. Hooves shod recently.",
+    healthRecords: [
+      { type: "Checkup", date: "10 Jun 2026", note: "Hoof trimming and shoeing completed. General health is excellent." },
+      { type: "Vaccination", date: "15 Jan 2026", note: "Equine influenza vaccine booster administered." }
+    ],
+    friendliness: 85,
+    energy: 92,
+    trust: 90,
+    playfulness: 75,
+    communityLove: { followers: 420, memories: 42, helpers: 18 },
+    dailyThought: "The fog was thick on the trail today. A kind traveler shared a crunchy apple with me. A truly royal treat! 🍎🐎",
+    careTimeline: [
+      { date: "Jun 2026", label: "🐴 Hoof Care", note: "Got a fresh set of shiny horse shoes." },
+      { date: "Jul 2026", label: "👑 Joined PawBook", note: "Chetak becomes the first royal steed in our village book!" }
+    ]
+  },
 ];
 
 const defaultMemories: Memory[] = [
@@ -497,6 +541,21 @@ const defaultMemories: Memory[] = [
     showInTimeline: true,
     showInSpinWheel: true,
   },
+  {
+    id: "m5",
+    animalSlug: "chetak",
+    title: "The Royal Trail Sighting",
+    story: "Met Chetak on the foggy mountain path today. He was very gentle and happily ate a carrot right from my hand! 🥕🐎",
+    image: chetak,
+    date: "July 16, 2026",
+    location: "Misty Mountain Trail",
+    mood: "happy",
+    pawPrints: 480,
+    showInStories: true,
+    showInSurpriseBox: true,
+    showInTimeline: true,
+    showInSpinWheel: true,
+  },
 ];
 
 const defaultDialogues: PetDialogue[] = [
@@ -527,6 +586,16 @@ const defaultDialogues: PetDialogue[] = [
     message: "Let's go! What are we chasing today? 🎾 A leaf? A butterfly?",
     emotion: "funny",
   },
+  {
+    petSlug: "chetak",
+    message: "A royal hello! 👑 Did you bring any carrots or apples today? The trails are beautiful but a snack makes them even better!",
+    emotion: "happy",
+  },
+  {
+    petSlug: "chetak",
+    message: "I am Chetak. I carry the name of history's bravest horse. Do not fear my size, I am very gentle! 🐎",
+    emotion: "funny",
+  },
 ];
 
 const defaultQuizQuestions: QuizQuestion[] = [
@@ -537,6 +606,7 @@ const defaultQuizQuestions: QuizQuestion[] = [
       { text: "Hunt for tasty snacks 🍪", pet: "coco", icon: "🍪" },
       { text: "Demand attention & belly rubs ❤️", pet: "moti", icon: "❤️" },
       { text: "Go on a running adventure 🏃", pet: "tommy", icon: "🏃" },
+      { text: "Go for a run on the foggy trails ⛰️", pet: "chetak", icon: "⛰️" },
     ],
   },
   {
@@ -550,6 +620,7 @@ const defaultQuizQuestions: QuizQuestion[] = [
       { text: "Melting hearts with puppy eyes 🥺", pet: "moti", icon: "🥺" },
       { text: "Silent contemplation from rooftops 🐈", pet: "kitty", icon: "🐈" },
       { text: "Monsoon splash-running champ 🧣", pet: "tommy", icon: "🧣" },
+      { text: "Brave speed and royal heritage 👑", pet: "chetak", icon: "👑" },
     ],
   },
   {
@@ -559,6 +630,7 @@ const defaultQuizQuestions: QuizQuestion[] = [
       { text: "Cozy rainy noise under a shop roof 🌧️", pet: "moti", icon: "🌧️" },
       { text: "A bright hot sunbeam on a balcony ☀️", pet: "kitty", icon: "☀️" },
       { text: "Monsoon puddles to leap over! ⛈️", pet: "tommy", icon: "⛈️" },
+      { text: "Foggy mountain winds on the hilltops ⛰️", pet: "chetak", icon: "⛰️" },
     ],
   },
   {
@@ -568,6 +640,7 @@ const defaultQuizQuestions: QuizQuestion[] = [
       { text: "Tea shop owners with warm milk 🥛", pet: "moti", icon: "🥛" },
       { text: "Silence and a plate of grilled fish 🐟", pet: "kitty", icon: "🐟" },
       { text: "Anyone who has a treat in their hand! 🍖", pet: "tommy", icon: "🍖" },
+      { text: "Fresh red crunchy carrots 🥕", pet: "chetak", icon: "🥕" },
     ],
   },
   {
@@ -577,6 +650,7 @@ const defaultQuizQuestions: QuizQuestion[] = [
       { text: "Trot over immediately for side scratches 🐶", pet: "moti", icon: "🐶" },
       { text: "Watch them silently to judge their character 🐈", pet: "kitty", icon: "🐈" },
       { text: "Bark happily and run around their legs! 🐾", pet: "tommy", icon: "🐾" },
+      { text: "Stand tall and greet them with a proud neigh 🐎", pet: "chetak", icon: "🐎" },
     ],
   },
 ];
@@ -615,6 +689,14 @@ const defaultSpinRewards: SpinReward[] = [
       "Tommy holds the official village speed record of catching 12 leaves mid-air in under 3 minutes during autumn winds!",
   },
   {
+    label: "Chetak's Path",
+    color: "#8E44AD",
+    icon: "⛰️",
+    title: "Chetak's Secret Valley ⛰️",
+    content:
+      "Chetak knows a secret valley path where the grass is always sweet and the fog clears up to show a beautiful rainbow!",
+  },
+  {
     label: "Rare Memory",
     color: "#FDFD96",
     icon: "📸",
@@ -648,6 +730,12 @@ const defaultSurprises: SurpriseReward[] = [
     icon: "🐕",
     content:
       "Tommy chased a dry mango leaf for three entire blocks, caught it, and proudly carried it in his mouth like a golden trophy.",
+  },
+  {
+    title: "Chetak's Royal Speed 🐎",
+    icon: "⚡",
+    content:
+      "Chetak can run up a steep mountain slope faster than any other creature in the valley, but he always stops to smell the wildflowers!",
   },
   {
     title: "Village Secret 🗺️",
@@ -947,6 +1035,14 @@ export const mapPlaces = [
     animals: ["bruno"],
   },
   { id: "home", name: "Home Friends", icon: "🏠", top: "70%", left: "28%", animals: ["tommy"] },
+  {
+    id: "mountain",
+    name: "Misty Mountain Trail",
+    icon: "⛰️",
+    top: "10%",
+    left: "50%",
+    animals: ["chetak"],
+  },
 ];
 
 export const natureCategories = [

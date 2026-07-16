@@ -6,6 +6,7 @@ import coco from "@/assets/coco.png";
 import moti from "@/assets/moti.png";
 import kitty from "@/assets/kitty.png";
 import tommy from "@/assets/tommy.png";
+import chetak from "@/assets/chetak.png";
 import postMoti from "@/assets/post-moti.png";
 import postKitty from "@/assets/post-kitty.png";
 
@@ -20,6 +21,8 @@ const assetMap: Record<string, string> = {
   "/src/assets/kitty.png": kitty,
   "/src/assets/tommy.jpg": tommy,
   "/src/assets/tommy.png": tommy,
+  "/src/assets/chetak.jpg": chetak,
+  "/src/assets/chetak.png": chetak,
   "/src/assets/post-moti.jpg": postMoti,
   "/src/assets/post-moti.png": postMoti,
   "/src/assets/post-kitty.jpg": postKitty,
@@ -34,6 +37,8 @@ const assetMap: Record<string, string> = {
   "kitty.png": kitty,
   "tommy.jpg": tommy,
   "tommy.png": tommy,
+  "chetak.jpg": chetak,
+  "chetak.png": chetak,
   "post-moti.jpg": postMoti,
   "post-moti.png": postMoti,
   "post-kitty.jpg": postKitty,

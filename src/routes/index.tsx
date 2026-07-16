@@ -59,7 +59,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Meet Coco, Moti, Kitty and Tommy — a cozy village of beloved animals whose stories live forever in PawBook.",
+          "Meet Coco, Moti, Kitty, Tommy and Chetak — a cozy village of beloved animals whose stories live forever in PawBook.",
       },
     ],
   }),
@@ -445,7 +445,7 @@ function HomePage() {
       if (isReunion) {
         await new Promise((r) => setTimeout(r, 1200));
         setWeaverResult(
-          `It was a perfect afternoon in the flower meadow. Bruno arrived first, proudly carrying a packet of Parle-G biscuits. Coco trotted along, looking like a friendly tiger. Moti joined next, wagging his tail happily. Kitty watched them gracefully from the low branch of a mango tree, and Tommy came sprinting through the grass chasing a yellow butterfly. For the first time, all five friends shared a sunny spot together under the warm sky, happy to be part of the same loving village. 💮🐕🐶🐈🎒🍪`,
+          `It was a perfect afternoon in the flower meadow. Bruno arrived first, proudly carrying a packet of Parle-G biscuits. Coco trotted along, looking like a friendly tiger. Moti joined next, wagging his tail happily. Kitty watched them gracefully from the low branch of a mango tree, Tommy came sprinting through the grass chasing a yellow butterfly, and Chetak walked in majestically, his jet-black coat shining under the sun. For the first time, all six friends shared a sunny spot together under the warm sky, happy to be part of the same loving village. 💮🐕🐶🐈🎒🍪🐎`,
         );
         setShowCertificate(true);
       } else {

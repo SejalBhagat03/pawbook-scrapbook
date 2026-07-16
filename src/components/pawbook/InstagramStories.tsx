@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import cocoImg from "@/assets/coco.png";
+import motiImg from "@/assets/moti.png";
+import kittyImg from "@/assets/kitty.png";
+import tommyImg from "@/assets/tommy.png";
 
 interface StorySlide {
   image: string;
@@ -45,12 +48,10 @@ const storiesData: PetStory[] = [
     slug: "moti",
     name: "Moti",
     emoji: "🐶",
-    avatar:
-      "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=150",
+    avatar: motiImg,
     slides: [
       {
-        image:
-          "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=600",
+        image: motiImg,
         title: "Day 1: Safe & Sound ❤️",
         desc: "Moti was a tiny ball of fluff when he wandered into the lane. The local tea vendor gave him a cardboard bed and warm milk.",
       },
@@ -72,12 +73,10 @@ const storiesData: PetStory[] = [
     slug: "kitty",
     name: "Kitty",
     emoji: "🐈",
-    avatar:
-      "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=150",
+    avatar: kittyImg,
     slides: [
       {
-        image:
-          "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=600",
+        image: kittyImg,
         title: "Day 1: The Queen's Arrival 👑",
         desc: "Slipped into the library balcony silently. We didn't find her; she found us and claimed the balcony cushion.",
       },
@@ -99,12 +98,10 @@ const storiesData: PetStory[] = [
     slug: "tommy",
     name: "Tommy",
     emoji: "🐕",
-    avatar:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150",
+    avatar: tommyImg,
     slides: [
       {
-        image:
-          "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600",
+        image: tommyImg,
         title: "Day 1: Tiny Monster 🍼",
         desc: "Found shivering in a monsoon puddle. A student picked him up and dried him with their favorite winter scarf.",
       },

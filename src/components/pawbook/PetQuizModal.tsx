@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import cocoImg from "@/assets/coco.png";
+import motiImg from "@/assets/moti.png";
+import kittyImg from "@/assets/kitty.png";
+import tommyImg from "@/assets/tommy.png";
 import { toast } from "sonner";
 import { animals, quizQuestions } from "@/lib/pawbook-data";
 import { copyToClipboard, shareContent } from "@/lib/utils";
@@ -32,8 +35,7 @@ const resultsData: Record<
     nickname: "Belly Rub Believer",
     emoji: "🐶",
     similarity: "99% Love Compatibility",
-    photo:
-      "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=400",
+    photo: motiImg,
     desc: "You are pure warmth ❤️ You believe there is no such thing as too many belly rubs, and warm milk near a tea shop is heaven.",
   },
   kitty: {
@@ -41,8 +43,7 @@ const resultsData: Record<
     nickname: "Rooftop Philosopher",
     emoji: "🐈",
     similarity: "95% Majestic Radiance",
-    photo:
-      "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=400",
+    photo: kittyImg,
     desc: "You are quiet, self-sufficient, and slightly royal 👑 You prefer sunbathing in silence and observing the world from above.",
   },
   tommy: {
@@ -50,8 +51,7 @@ const resultsData: Record<
     nickname: "Little Adventurer",
     emoji: "🐕",
     similarity: "97% Energy Matching",
-    photo:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=400",
+    photo: tommyImg,
     desc: "You are a wild leaf-chaser 🧣 Rain showers don't scare you, and you're always ready to sprint after butterfly dreams!",
   },
 };

@@ -118,6 +118,18 @@ const animalTimelines: Record<string, { date: string; label: string; note: strin
       note: "A kind visitor dried him off and gave him a cozy blanket.",
     },
   ],
+  chetak: [
+    {
+      date: "Jun 10",
+      label: "🐴 Hoof Care",
+      note: "Got a fresh set of shiny horse shoes.",
+    },
+    {
+      date: "Jul 16",
+      label: "👑 Joined PawBook",
+      note: "Chetak becomes the first royal steed in our village book!",
+    },
+  ],
 };
 
 function AnimalProfile() {
@@ -180,6 +192,7 @@ function AnimalProfile() {
     moti: `Hey there! 🍪\nMoti here — the official biscuit inspector of the tea shop.\n\nI work very hard every day.\nI make sure everyone who sits down feels welcome.\n\nBelly rubs accepted. Always. 🐕`,
     kitty: `...\n\nI don't say much. But I notice everything.\n\nThe butterfly that came yesterday.\nThe warm patch of sun on the balcony.\nYou, reading this right now. 🐈\n\nThat's enough.`,
     tommy: `Woof! 🌧️\nI'm Tommy — I survived the big storm!\n\nA kind person gave me a warm blanket that night.\nI still look for them every morning.\n\nI'm safe now. Thank you for caring. 🧣`,
+    chetak: `Namaste traveler! 👑\nI'm Chetak — named after the legendary royal warrior horse.\n\nI patrol the foggy trails near the mountain valley gate.\nSome call me proud, but I'm just happy to keep everyone safe.\n\nA sweet red carrot is all it takes to make my day. 🥕🐴`,
   };
   const petVoice =
     petVoiceMemories[a.slug] ||

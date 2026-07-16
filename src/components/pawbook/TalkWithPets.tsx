@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useCMS } from "@/lib/pawbook-data";
 import cocoImg from "@/assets/coco.png";
+import motiImg from "@/assets/moti.png";
+import kittyImg from "@/assets/kitty.png";
+import tommyImg from "@/assets/tommy.png";
 
 interface PetChat {
   slug: string;
@@ -43,8 +46,7 @@ const petChats: PetChat[] = [
     slug: "moti",
     name: "Moti",
     emoji: "🐶",
-    avatar:
-      "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=150",
+    avatar: motiImg,
     greeting: "Belly rub time? I'm ready! 🐶 The corner near the tea stall is warm today.",
     prompts: [
       {
@@ -65,8 +67,7 @@ const petChats: PetChat[] = [
     slug: "kitty",
     name: "Kitty",
     emoji: "🐈",
-    avatar:
-      "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=150",
+    avatar: kittyImg,
     greeting:
       "I have selected you as my servant today. 😼 Ask me something, or just stand there in awe.",
     prompts: [
@@ -88,8 +89,7 @@ const petChats: PetChat[] = [
     slug: "tommy",
     name: "Tommy",
     emoji: "🐕",
-    avatar:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150",
+    avatar: tommyImg,
     greeting: "Let's go! What are we chasing today? 🎾 A leaf? A butterfly? I have maximum energy!",
     prompts: [
       {
